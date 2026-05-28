@@ -1,7 +1,7 @@
 // sw.js
 // Service Worker for offline availability and update checking.
 
-const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.5';
+const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.7';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
@@ -20,10 +20,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching all files');
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => {
-      // Force the waiting service worker to become the active service worker
-      return self.skipWaiting();
+      const requests = ASSETS_TO_CACHE.map(url => {
+        // Bypass HTTP cache for local resources to ensure we cache the fresh files
+        if (url.startsWith('./') || !url.startsWith('http')) {
+          return new Request(url, { cache: 'reload' });
+        }
+        return new Request(url);
+      });
+      return cache.addAll(requests);
     })
   );
 });

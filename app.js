@@ -5,7 +5,7 @@ const CONFIG = {
     vocabPath: 'content/vocabulary.json',
     wasmPath: 'assets/wasm/core.wasm',
     defaultXP: 0,
-    version: 'v1.0.5'
+    version: 'v1.0.7'
 };
 
 let state = {
@@ -30,6 +30,7 @@ let wasmExports = null;
 // --- 2. INITIALIZATION & PWAs ---
 document.addEventListener('DOMContentLoaded', async () => {
     loadProgress();
+    initTheme();
     initUI();
     document.getElementById('app-version-badge').textContent = CONFIG.version;
     registerServiceWorker();
@@ -59,7 +60,7 @@ function registerServiceWorker() {
             }
         });
 
-        navigator.serviceWorker.register('sw.js').then((reg) => {
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
             console.log('ServiceWorker registered with scope:', reg.scope);
             
             // Periodically check for updates on the server
@@ -324,6 +325,13 @@ function initUI() {
         }
     });
 
+    // Theme toggles
+    const handleThemeToggle = () => toggleTheme();
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    if (themeBtn) themeBtn.addEventListener('click', handleThemeToggle);
+    const settingsThemeBtn = document.getElementById('settings-theme-toggle-btn');
+    if (settingsThemeBtn) settingsThemeBtn.addEventListener('click', handleThemeToggle);
+
     // Check offline status
     const updateOnlineStatus = () => {
         const badge = document.getElementById('online-status-badge');
@@ -339,9 +347,24 @@ function initUI() {
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
     
-    // Trigger mock update check
+    // Trigger actual update check
     document.getElementById('trigger-update-check-btn').addEventListener('click', () => {
-        alert('Checking for updates on GitHub...\nApplication is up to date (v1.0.0).');
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.update().then(() => {
+                    if (!reg.waiting && !reg.installing) {
+                        alert(`Checking for updates... Application is up to date (${CONFIG.version}).`);
+                    } else {
+                        alert("A new version is available! The update banner will now appear.");
+                    }
+                }).catch(err => {
+                    console.error("Update check failed:", err);
+                    alert(`Checking for updates... Application is up to date (${CONFIG.version}).`);
+                });
+            });
+        } else {
+            alert(`Application is up to date (${CONFIG.version}).`);
+        }
     });
     
     // Export vocabulary JSON
@@ -859,4 +882,41 @@ function exportVocabJSON() {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+}
+
+// --- THEME MANAGEMENT ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.body.classList.add('dark-mode');
+        updateThemeButtons(true);
+    } else {
+        document.body.classList.remove('dark-mode');
+        updateThemeButtons(false);
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeButtons(isDark);
+}
+
+function updateThemeButtons(isDark) {
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const settingsThemeBtn = document.getElementById('settings-theme-toggle-btn');
+    
+    const emoji = isDark ? '☀️' : '🌙';
+    const text = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    const title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    
+    if (themeBtn) {
+        themeBtn.textContent = emoji;
+        themeBtn.title = title;
+    }
+    if (settingsThemeBtn) {
+        settingsThemeBtn.textContent = text;
+    }
 }
