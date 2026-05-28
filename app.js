@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then((reg) => {
-            console.log('ServiceWorker registriert mit Scope:', reg.scope);
+            console.log('ServiceWorker registered with scope:', reg.scope);
             
             // Listen for updates
             reg.addEventListener('updatefound', () => {
@@ -67,7 +67,7 @@ function registerServiceWorker() {
                 showUpdateToast(reg);
             }
         }).catch((err) => {
-            console.error('ServiceWorker Registrierung fehlgeschlagen:', err);
+            console.error('ServiceWorker registration failed:', err);
         });
     }
 }
@@ -96,7 +96,7 @@ async function loadWasm() {
     
     try {
         const response = await fetch(CONFIG.wasmPath);
-        if (!response.ok) throw new Error(`Wasm Datei konnte nicht geladen werden: ${response.statusText}`);
+        if (!response.ok) throw new Error(`Wasm file could not be loaded: ${response.statusText}`);
         
         const wasmBytes = await response.arrayBuffer();
         const wasmObj = await WebAssembly.instantiate(wasmBytes, {
@@ -106,15 +106,14 @@ async function loadWasm() {
         });
         
         wasmExports = wasmObj.instance.exports;
-        console.log('Zig Core WebAssembly erfolgreich geladen!');
+        console.log('Zig Core WebAssembly loaded successfully!');
         
         // Initialize the random seed in Zig core
         if (wasmExports.initSeed) {
             wasmExports.initSeed(BigInt(Date.now()));
         }
     } catch (err) {
-        console.error('WebAssembly Ladefehler. Nutze JS Fallbacks.', err);
-        // We will build pure JS fallback functions for robustness if Wasm fails to load (e.g. local file protocol)
+        console.error('WebAssembly loading failed. Using JS Fallbacks.', err);
         setupJsFallbacks();
     } finally {
         loadingScreen.classList.add('hidden');
@@ -128,7 +127,6 @@ function setupJsFallbacks() {
         xpForNextLevel: (lvl) => lvl * lvl * 100,
         xpForCurrentLevel: (lvl) => (lvl <= 1) ? 0 : (lvl - 1) * (lvl - 1) * 100,
         validateSpelling: (typedPtr, typedLen, expectedPtr, expectedLen) => {
-            // JS Fallback spelling check
             const decoder = new TextDecoder();
             const memoryBuffer = new Uint8Array(wasmExports.memory.buffer);
             
@@ -139,7 +137,6 @@ function setupJsFallbacks() {
             return clean(typed) === clean(expected) ? 1 : 0;
         },
         shuffleArray: (ptr, len) => {
-            // JS Fallback shuffle
             const view = new Uint32Array(wasmExports.memory.buffer, ptr, len);
             for (let i = len - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -148,9 +145,8 @@ function setupJsFallbacks() {
                 view[j] = temp;
             }
         },
-        // Mock buffer pointers in normal object for JS mode
         memory: {
-            buffer: new ArrayBuffer(65536 * 10) // Mock buffer
+            buffer: new ArrayBuffer(65536 * 10)
         },
         getTypedBufferPointer: () => 0,
         getExpectedBufferPointer: () => 256,
@@ -164,26 +160,21 @@ function setupJsFallbacks() {
 function verifySpellingWithWasm(typed, expected) {
     if (!wasmExports) return false;
     
-    // 1. Get pointers to Wasm buffers
     const typedPtr = wasmExports.getTypedBufferPointer();
     const expectedPtr = wasmExports.getExpectedBufferPointer();
     const maxSize = wasmExports.getBufferMaxSize();
     
-    // 2. Encode strings to UTF-8
     const encoder = new TextEncoder();
     const typedBytes = encoder.encode(typed);
     const expectedBytes = encoder.encode(expected);
     
-    // Ensure we don't overflow Wasm buffer
     const typedLen = Math.min(typedBytes.length, maxSize);
     const expectedLen = Math.min(expectedBytes.length, maxSize);
     
-    // 3. Write bytes to Wasm memory
     const wasmMem = new Uint8Array(wasmExports.memory.buffer);
     wasmMem.set(typedBytes.subarray(0, typedLen), typedPtr);
     wasmMem.set(expectedBytes.subarray(0, expectedLen), expectedPtr);
     
-    // 4. Invoke Wasm function
     const result = wasmExports.validateSpelling(typedPtr, typedLen, expectedPtr, expectedLen);
     return result === 1;
 }
@@ -191,7 +182,6 @@ function verifySpellingWithWasm(typed, expected) {
 // Helper to shuffle an array of indices using Zig Wasm
 function shuffleIndicesWithWasm(len) {
     if (!wasmExports || len <= 1) {
-        // Fallback shuffle
         const arr = Array.from({length: len}, (_, i) => i);
         return arr.sort(() => Math.random() - 0.5);
     }
@@ -200,22 +190,18 @@ function shuffleIndicesWithWasm(len) {
     const shuffleSize = Math.min(len, maxShuffleSize);
     const shufflePtr = wasmExports.getShuffleBufferPointer();
     
-    // Write 0..shuffleSize-1 to shuffle buffer
     const wasmMemU32 = new Uint32Array(wasmExports.memory.buffer, shufflePtr, shuffleSize);
     for (let i = 0; i < shuffleSize; i++) {
         wasmMemU32[i] = i;
     }
     
-    // Call Zig shuffle
     wasmExports.shuffleArray(shufflePtr, shuffleSize);
     
-    // Read back shuffled array
     const shuffled = [];
     for (let i = 0; i < shuffleSize; i++) {
         shuffled.push(wasmMemU32[i]);
     }
     
-    // Append remaining elements unshuffled if input was larger than buffer limit
     for (let i = shuffleSize; i < len; i++) {
         shuffled.push(i);
     }
@@ -230,13 +216,11 @@ async function loadVocabulary() {
         if (!response.ok) throw new Error('Vocabulary JSON could not be loaded');
         const defaultVocab = await response.json();
         
-        // Combine default with custom vocabulary from localStorage
         const custom = JSON.parse(localStorage.getItem('custom_vocab')) || [];
         state.customVocabulary = custom;
         state.vocabulary = [...defaultVocab, ...custom];
     } catch (err) {
         console.error('Vocabulary loading failed, using static fallback.', err);
-        // Safety Fallback Vocabulary if JSON fetch fails
         state.vocabulary = [
             { id: "hund", word: "der Hund", translation: "dog", category: "Tiere", emoji: "🐶", difficulty: 1 },
             { id: "katze", word: "die Katze", translation: "cat", category: "Tiere", emoji: "🐱", difficulty: 1 },
@@ -259,7 +243,6 @@ function saveProgress() {
 function addXP(amount) {
     state.xp += amount;
     
-    // Recalculate level
     if (wasmExports) {
         const newLevel = wasmExports.calculateLevel(state.xp);
         if (newLevel > state.level) {
@@ -272,8 +255,7 @@ function addXP(amount) {
 }
 
 function showLevelUpEffect() {
-    // Alert or fancy display
-    alert(`🎉 Gratulation! Du bist jetzt Level ${state.level}! 🌟 Weiter so!`);
+    alert(`🎉 Congratulations! You reached Level ${state.level}! 🌟 Keep it up!`);
 }
 
 // --- 5. UI CONTROLLERS ---
@@ -292,7 +274,7 @@ function initUI() {
     
     // Game Exit / Back button
     document.getElementById('game-back-btn').addEventListener('click', () => {
-        if(confirm('Möchtest du das Spiel beenden? Dein Fortschritt in dieser Runde geht verloren.')) {
+        if(confirm('Do you want to leave the game? Your progress in this session will be lost.')) {
             switchScreen('dashboard');
         }
     });
@@ -308,7 +290,7 @@ function initUI() {
     
     // Reset Progress
     document.getElementById('reset-progress-btn').addEventListener('click', () => {
-        if (confirm('Möchtest du wirklich deinen gesamten Lernfortschritt (Level & XP) löschen?')) {
+        if (confirm('Do you really want to reset your entire learning progress (Level & XP)?')) {
             localStorage.clear();
             state.xp = CONFIG.defaultXP;
             state.level = 1;
@@ -316,7 +298,7 @@ function initUI() {
             loadVocabulary().then(() => {
                 saveProgress();
                 renderCategories();
-                alert('Fortschritt zurückgesetzt!');
+                alert('Progress reset successfully!');
                 switchScreen('dashboard');
             });
         }
@@ -339,7 +321,7 @@ function initUI() {
     
     // Trigger mock update check
     document.getElementById('trigger-update-check-btn').addEventListener('click', () => {
-        alert('Suche nach Updates auf GitHub...\nApp ist auf dem neuesten Stand (v1.0.0).');
+        alert('Checking for updates on GitHub...\nApplication is up to date (v1.0.0).');
     });
     
     // Export vocabulary JSON
@@ -347,17 +329,13 @@ function initUI() {
 }
 
 function switchScreen(screenId) {
-    // Hide all screens
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    // Show active screen
     document.getElementById(`screen-${screenId}`).classList.add('active');
     
-    // Update navigation buttons active state
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     const matchingBtn = document.getElementById(`nav-${screenId}-btn`);
     if (matchingBtn) matchingBtn.classList.add('active');
     
-    // Hide game modal if switching screens
     hideGameModal();
 }
 
@@ -378,7 +356,6 @@ function updateXPBar() {
 
 // --- 6. CATEGORIES RENDER ---
 function renderCategories() {
-    // Extract unique categories
     const categoriesSet = new Set(state.vocabulary.map(v => v.category));
     const categories = Array.from(categoriesSet);
     
@@ -394,11 +371,20 @@ function renderCategories() {
     };
     
     const categoryColors = {
-        'Tiere': '#FF9F1C', // Soft Orange
-        'Essen': '#FF5B7F', // Soft Pink
-        'Farben': '#3A86FF', // Soft Blue
-        'Schule': '#2EC4B6', // Soft Green
-        'Kleidung': '#8338EC' // Soft Purple
+        'Tiere': '#FF9F1C',
+        'Essen': '#FF5B7F',
+        'Farben': '#3A86FF',
+        'Schule': '#2EC4B6',
+        'Kleidung': '#8338EC'
+    };
+
+    // English localized headers for children in the UI
+    const categoryNamesEn = {
+        'Tiere': 'Animals (Tiere)',
+        'Essen': 'Food (Essen)',
+        'Farben': 'Colors (Farben)',
+        'Schule': 'School (Schule)',
+        'Kleidung': 'Clothes (Kleidung)'
     };
 
     categories.forEach(cat => {
@@ -408,11 +394,12 @@ function renderCategories() {
         card.style.setProperty('--card-accent', categoryColors[cat] || '#5271FF');
         
         const emoji = categoryIcons[cat] || '⭐';
+        const displayName = categoryNamesEn[cat] || cat;
         
         card.innerHTML = `
             <span class="category-emoji">${emoji}</span>
-            <h3>${cat}</h3>
-            <span>${count} Wörter</span>
+            <h3>${displayName}</h3>
+            <span>${count} Words</span>
         `;
         
         card.addEventListener('click', () => showGameModal(cat));
@@ -422,10 +409,18 @@ function renderCategories() {
 
 function showGameModal(category) {
     state.activeCategory = category;
-    document.getElementById('modal-category-title').textContent = category;
+    
+    const categoryNamesEn = {
+        'Tiere': 'Animals (Tiere)',
+        'Essen': 'Food (Essen)',
+        'Farben': 'Colors (Farben)',
+        'Schule': 'School (Schule)',
+        'Kleidung': 'Clothes (Kleidung)'
+    };
+    
+    document.getElementById('modal-category-title').textContent = categoryNamesEn[category] || category;
     document.getElementById('game-mode-modal').classList.remove('hidden');
     
-    // Assign game button click triggers
     document.getElementById('start-game-match').onclick = () => startGame('match');
     document.getElementById('start-game-spelling').onclick = () => startGame('spelling');
     document.getElementById('start-game-memory').onclick = () => startGame('memory');
@@ -442,37 +437,31 @@ function startGame(gameType) {
     state.gameScore = 0;
     document.getElementById('game-score').textContent = '0';
     
-    // Filter words matching active category
     const catWords = state.vocabulary.filter(w => w.category === state.activeCategory);
     
     if (catWords.length < 3 && gameType !== 'memory') {
-        alert('Zu wenige Vokabeln in dieser Kategorie vorhanden! Füge zuerst mehr Vokabeln hinzu.');
+        alert('Not enough vocabulary in this category! Please add more cards first.');
         return;
     }
     if (catWords.length < 4 && gameType === 'memory') {
-        alert('Für Memory werden mindestens 4 Vokabeln in dieser Kategorie benötigt!');
+        alert('Memory match game requires at least 4 vocabulary cards in this category!');
         return;
     }
     
-    // Setup game active header
     const gameConfigs = {
-        'match': { title: 'Wort-Bild-Rätsel', icon: '🖼️' },
-        'spelling': { title: 'Buchstabieren', icon: '🔤' },
-        'memory': { title: 'Memory', icon: '🎴' }
+        'match': { title: 'Word-Image Quiz', icon: '🖼️' },
+        'spelling': { title: 'Spelling Game', icon: '🔤' },
+        'memory': { title: 'Memory Match', icon: '🎴' }
     };
     document.getElementById('game-active-icon').textContent = gameConfigs[gameType].icon;
     document.getElementById('game-active-name').textContent = gameConfigs[gameType].title;
     
     switchScreen('game');
     
-    // Hide all sub-game views
     document.getElementById('game-view-match').classList.add('hidden');
     document.getElementById('game-view-spelling').classList.add('hidden');
     document.getElementById('game-view-memory').classList.add('hidden');
     
-    // Select cards for session
-    // For Match and Spelling, we take up to 5 random cards from the category.
-    // Shuffle category words using Wasm or JS shuffle index helper
     const shuffledIndexes = shuffleIndicesWithWasm(catWords.length);
     state.sessionCards = shuffledIndexes.slice(0, 5).map(idx => catWords[idx]);
     state.currentCardIndex = 0;
@@ -484,7 +473,6 @@ function startGame(gameType) {
         document.getElementById('game-view-spelling').classList.remove('hidden');
         loadSpellingRound();
     } else if (gameType === 'memory') {
-        // Memory needs exactly 4 cards to make 8 grid elements
         state.sessionCards = shuffledIndexes.slice(0, 4).map(idx => catWords[idx]);
         document.getElementById('game-view-memory').classList.remove('hidden');
         loadMemoryGame();
@@ -501,15 +489,12 @@ function loadMatchRound() {
     const correctCard = state.sessionCards[state.currentCardIndex];
     document.getElementById('match-question-emoji').textContent = correctCard.emoji;
     
-    // Make choices
-    // Must contain 1 correct choice + 3 random choices from whole vocab or category
     const otherOptions = state.vocabulary
         .filter(w => w.id !== correctCard.id)
         .sort(() => Math.random() - 0.5)
         .slice(0, 3);
         
     const choices = [correctCard, ...otherOptions];
-    // Shuffle choices using wasm
     const shuffledChoicesIdx = shuffleIndicesWithWasm(choices.length);
     const finalChoices = shuffledChoicesIdx.map(idx => choices[idx]);
     
@@ -520,13 +505,11 @@ function loadMatchRound() {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         
-        // Add pedagogical article coloring
         const article = choice.word.split(' ')[0].toLowerCase();
         if (article === 'der') btn.classList.add('article-btn-der');
         else if (article === 'die') btn.classList.add('article-btn-die');
         else if (article === 'das') btn.classList.add('article-btn-das');
         
-        // Make the article itself visually bold/accented in the button text
         let displayWord = choice.word;
         if (['der', 'die', 'das'].includes(article)) {
             const noun = choice.word.substring(article.length).trim();
@@ -540,7 +523,6 @@ function loadMatchRound() {
 }
 
 function verifyMatchAnswer(button, selectedChoice, correctCard) {
-    // Disable all buttons in option grid during validation check
     document.querySelectorAll('#match-options-container button').forEach(b => b.style.pointerEvents = 'none');
     
     const isCorrect = selectedChoice.id === correctCard.id;
@@ -555,11 +537,8 @@ function verifyMatchAnswer(button, selectedChoice, correctCard) {
         }, 1200);
     } else {
         button.classList.add('wrong');
-        
-        // Find correct button and flash it briefly
         setTimeout(() => {
             button.classList.remove('wrong');
-            // Re-enable clicks to let them try again
             document.querySelectorAll('#match-options-container button').forEach(b => b.style.pointerEvents = 'auto');
         }, 1000);
     }
@@ -575,14 +554,11 @@ function loadSpellingRound() {
     const correctCard = state.sessionCards[state.currentCardIndex];
     document.getElementById('spelling-question-emoji').textContent = correctCard.emoji;
     
-    // Clear state
     state.spellingTypedLetters = [];
     
-    // Get actual spelling letters (excluding article)
     const cleanWord = correctCard.word.replace(/^(der|die|das)\s+/i, '').trim();
     const letters = cleanWord.split('');
     
-    // Generate empty answer slots
     const slotsContainer = document.getElementById('spelling-slots');
     slotsContainer.innerHTML = '';
     letters.forEach(() => {
@@ -591,7 +567,6 @@ function loadSpellingRound() {
         slotsContainer.appendChild(slot);
     });
     
-    // Create letters pool and shuffle them using Zig WebAssembly
     const indices = Array.from({length: letters.length}, (_, i) => i);
     const shuffledIndices = shuffleIndicesWithWasm(letters.length);
     const shuffledLetters = shuffledIndices.map(idx => letters[idx]);
@@ -606,7 +581,6 @@ function loadSpellingRound() {
         btn.dataset.poolIndex = index;
         
         btn.addEventListener('click', () => {
-            // Append letter to typed answer if slots not full
             if (state.spellingTypedLetters.length < letters.length) {
                 state.spellingTypedLetters.push({ letter, poolIndex: index });
                 btn.classList.add('used');
@@ -616,10 +590,8 @@ function loadSpellingRound() {
         poolContainer.appendChild(btn);
     });
     
-    // Clear and Submit actions
     document.getElementById('spelling-clear-btn').onclick = () => {
         state.spellingTypedLetters = [];
-        // Re-enable pool letters
         document.querySelectorAll('.pool-letter').forEach(btn => btn.classList.remove('used'));
         updateSpellingSlots();
     };
@@ -627,11 +599,9 @@ function loadSpellingRound() {
     document.getElementById('spelling-submit-btn').onclick = () => {
         const typedWord = state.spellingTypedLetters.map(x => x.letter).join('');
         
-        // CALL ZIG WASM EXPORT FOR SPELLING VALIDATION
         const isCorrect = verifySpellingWithWasm(typedWord, cleanWord);
         
         if (isCorrect) {
-            // Show all slots green
             document.querySelectorAll('.letter-slot').forEach(slot => slot.classList.add('filled', 'correct'));
             state.gameScore += 15;
             document.getElementById('game-score').textContent = state.gameScore;
@@ -641,12 +611,10 @@ function loadSpellingRound() {
                 loadSpellingRound();
             }, 1200);
         } else {
-            // Shake visual error
             const slots = document.getElementById('spelling-slots');
             slots.style.animation = 'shake 0.4s ease';
             setTimeout(() => {
                 slots.style.animation = '';
-                // Automatically clear incorrect spelling to try again
                 document.getElementById('spelling-clear-btn').click();
             }, 500);
         }
@@ -670,7 +638,6 @@ function updateSpellingSlots() {
 function loadMemoryGame() {
     const cards = [];
     
-    // Create pairs: 1 Word Card + 1 Emoji Card per item
     state.sessionCards.forEach(item => {
         cards.push({
             id: item.id,
@@ -684,7 +651,6 @@ function loadMemoryGame() {
         });
     });
     
-    // Shuffle cards using Zig WebAssembly
     const shuffledIndexes = shuffleIndicesWithWasm(cards.length);
     const shuffledCards = shuffledIndexes.map(idx => cards[idx]);
     
@@ -700,12 +666,10 @@ function loadMemoryGame() {
         cardEl.dataset.index = index;
         cardEl.dataset.id = card.id;
         
-        // Front and Back Elements
         const front = document.createElement('div');
         front.className = 'memory-card-front';
         front.textContent = card.value;
         
-        // Style word articles helper
         if (card.type === 'word') {
             front.classList.add('is-word');
             const article = card.value.split(' ')[0].toLowerCase();
@@ -728,7 +692,6 @@ function loadMemoryGame() {
 }
 
 function flipMemoryCard(cardEl, cardData) {
-    // Avoid double click, clicking flipped or matched card, or clicking 3rd card
     if (state.selectedMemoryCards.length >= 2 || 
         cardEl.classList.contains('flipped') || 
         cardEl.classList.contains('matched')) {
@@ -757,7 +720,6 @@ function checkMemoryMatch() {
             
             state.selectedMemoryCards = [];
             
-            // Check win condition (4 pairs matched)
             if (state.matchedMemoryPairs === state.sessionCards.length) {
                 setTimeout(endGame, 1000);
             }
@@ -773,11 +735,9 @@ function checkMemoryMatch() {
 
 // --- END GAME SESSIONS ---
 function endGame() {
-    // Trigger Game Over overlay
     const overlay = document.getElementById('game-over-overlay');
     const xpGainedEl = document.getElementById('xp-gained');
     
-    // Add XP to user profile
     const xpGained = state.gameScore;
     xpGainedEl.textContent = xpGained;
     
@@ -799,7 +759,6 @@ function handleAddVocab(e) {
     const article = articleSelect.value;
     const cleanWord = wordInput.value.trim();
     
-    // Formatting: combine article and word cleanly
     let finalWord = cleanWord;
     if (article !== '-') {
         finalWord = `${article} ${cleanWord}`;
@@ -814,36 +773,30 @@ function handleAddVocab(e) {
         difficulty: parseInt(diffSelect.value)
     };
     
-    // Save to runtime lists
     state.customVocabulary.push(newCard);
     state.vocabulary.push(newCard);
     
-    // Save to localStorage persistence
     localStorage.setItem('custom_vocab', JSON.stringify(state.customVocabulary));
     
-    // Reset inputs
     wordInput.value = '';
     transInput.value = '';
     emojiInput.value = '';
     
-    // Re-render
     renderCreatorTable();
     renderCategories();
     
-    alert('Vokabelkarte erfolgreich hinzugefügt! Sie kann jetzt sofort in den Spielen verwendet werden.');
+    alert('Vocabulary card added successfully! You can use it in the games immediately.');
 }
 
 function renderCreatorTable() {
     const tbody = document.getElementById('vocab-table-body');
     tbody.innerHTML = '';
     
-    // Show count
     document.getElementById('vocab-count').textContent = state.vocabulary.length;
     
     state.vocabulary.forEach((item, index) => {
         const tr = document.createElement('tr');
         
-        // Highlight custom items
         const isCustom = state.customVocabulary.some(cv => cv.id === item.id);
         if (isCustom) {
             tr.style.backgroundColor = 'rgba(82, 113, 255, 0.04)';
@@ -855,20 +808,18 @@ function renderCreatorTable() {
             <td style="color: var(--text-muted);">${item.translation}</td>
             <td><span class="badge blue">${item.category}</span></td>
             <td>
-                ${isCustom ? `<button class="badge-delete-btn" onclick="deleteCustomVocab('${item.id}')" title="Löschen">❌</button>` : `<span style="color: var(--text-muted); font-size: 0.8rem;">Standard</span>`}
+                ${isCustom ? `<button class="badge-delete-btn" onclick="deleteCustomVocab('${item.id}')" title="Delete">❌</button>` : `<span style="color: var(--text-muted); font-size: 0.8rem;">Default</span>`}
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Global reference helper for delete action in HTML rows
 window.deleteCustomVocab = function(id) {
-    if (confirm('Möchtest du diese Vokabelkarte löschen?')) {
+    if (confirm('Do you want to delete this vocabulary card?')) {
         state.customVocabulary = state.customVocabulary.filter(v => v.id !== id);
         localStorage.setItem('custom_vocab', JSON.stringify(state.customVocabulary));
         
-        // Re-load all vocabulary
         loadVocabulary().then(() => {
             renderCreatorTable();
             renderCategories();
@@ -876,9 +827,7 @@ window.deleteCustomVocab = function(id) {
     }
 };
 
-// Export to file system (for Git PR workflows)
 function exportVocabJSON() {
-    // We only export the complete active vocabulary set
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.vocabulary, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);

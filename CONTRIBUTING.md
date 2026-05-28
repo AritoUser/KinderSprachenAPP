@@ -1,62 +1,62 @@
-# Mitwirken an der Kinder-Deutsch-Lern-App 🤝
+# Contributing to the German-Learning-App 🤝
 
-Vielen Dank, dass du dich für das Mitwirken an diesem Projekt interessierst! Gemeinsam können wir Kindern den Einstieg in die deutsche Sprache erleichtern.
+Thank you for your interest in contributing to this project! Together, we can make it easier for children to start learning German.
 
-Es gibt viele Möglichkeiten, wie du mithelfen kannst:
-- **Programmierung:** Neue Mini-Spiele entwickeln, UI-Verbesserungen vornehmen oder den Zig-Core optimieren.
-- **Inhalte (Vokabeln):** Neue Wörter, Kategorien oder Übersetzungen hinzufügen.
-- **Design & Sound:** Kindgerechte Grafiken, Icons oder Sprachaufnahmen bereitstellen.
-- **Feedback & Bug-Reports:** Probleme melden oder Ideen einbringen.
+There are many ways you can help:
+- **Coding:** Developing new mini-games, improving the UI, or optimizing the Zig WebAssembly core.
+- **Content (Vocabulary):** Adding new words, categories, or translations.
+- **Design & Audio:** Providing child-friendly graphics, icons, or pronunciation recordings.
+- **Feedback & Bug Reports:** Reporting issues or suggesting new features.
 
 ---
 
-## 🛠️ Entwicklungs-Workflow
+## 🛠️ Development Workflow
 
-### Code-Änderungen vornehmen
-1. Erstelle einen neuen Branch für deine Änderungen:
+### Making Code Changes
+1. Create a new branch for your changes:
    ```bash
-   git checkout -b feature/mein-neues-spiel
+   git checkout -b feature/my-new-game
    ```
-2. Nimm deine Änderungen vor.
-3. Wenn du Änderungen am Zig-Code (`src/core.zig`) vorgenommen hast, kompiliere ihn neu:
+2. Make your modifications.
+3. If you changed the Zig code (`src/core.zig`), recompile the WebAssembly binary:
    ```powershell
    ./build_wasm.ps1
    ```
-4. Teste die App lokal mit einem Webserver (z. B. `npx http-server ./`).
-5. Erstelle einen Commit und pushe ihn in deinen Fork:
+4. Test the app locally using a web server (e.g. `npx http-server ./`).
+5. Commit and push your changes to your fork:
    ```bash
-   git commit -am "Füge neues Memory-Spiel hinzu"
-   git push origin feature/mein-neues-spiel
+   git commit -am "Add new Memory card matching game"
+   git push origin feature/my-new-game
    ```
-6. Erstelle einen Pull Request (PR) auf GitHub gegen den `develop`-Branch.
+6. Create a Pull Request (PR) on GitHub targeting the `develop` branch.
 
-### Wie füge ich neue Vokabeln hinzu?
-Vokabeln befinden sich in [content/vocabulary.json](content/vocabulary.json). Du kannst sie entweder direkt im Texteditor bearbeiten oder in der App den **"Content Creator" (Inhalts-Editor)** nutzen.
-Mit dem visuellen Inhalts-Editor kannst du:
-1. Neue Wörter mit Artikel, Übersetzung, Kategorie und Emoji erfassen.
-2. Die Liste als JSON-Datei exportieren.
-3. Die exportierte Datei als Ersatz für `content/vocabulary.json` ins Projekt einpflegen.
+### How to Add New Vocabulary?
+Vocabulary cards are stored in [content/vocabulary.json](content/vocabulary.json). You can edit this file directly or use the **"Content Creator"** inside the app.
+Using the visual editor, you can:
+1. Enter new words with their article, translation, category, and emoji.
+2. Export the updated list as a JSON file.
+3. Use the exported file to overwrite `content/vocabulary.json` in the project.
 
-Jedes Wort hat folgende Struktur:
+Each word follows this structure:
 ```json
 {
-  "id": "apfel",            // Eindeutige ID (Kleinbuchstaben)
-  "word": "der Apfel",      // Deutsches Wort (mit Artikel)
-  "translation": "Apple",   // Übersetzung (z.B. Englisch oder Muttersprache des Kindes)
-  "category": "Essen",      // Kategorie (z.B. Tiere, Farben, Essen, Schule, Kleidung)
-  "emoji": "🍎",            // Passendes Emoji als visuelle Hilfe
-  "difficulty": 1           // Schwierigkeitsgrad (1 = Einfach, 2 = Mittel, 3 = Schwer)
+  "id": "apfel",            // Unique ID (lowercase, alphanumeric)
+  "word": "der Apfel",      // German word (with article)
+  "translation": "Apple",   // Translation (English or the child's native language)
+  "category": "Essen",      // Category (e.g., Tiere, Farben, Essen, Schule, Kleidung)
+  "emoji": "🍎",            // Visual aid emoji
+  "difficulty": 1           // Difficulty level (1 = Easy, 2 = Medium, 3 = Hard)
 }
 ```
 
 ---
 
-## 🎨 Design-Richtlinien
-- **Zielgruppe:** Kinder von 4 bis 10 Jahren. Die UI sollte farbenfroh, aber aufgeräumt sein. Keine komplexen Texte, sondern Symbole, Emojis und visuelle Rückmeldungen (z.B. grünes Leuchten bei richtig, sanftes Rütteln bei falsch).
-- **Barrierefreiheit:** Große Touch-Targets für kleine Finger auf Smartphones und Tablets.
-- **Wortwahl:** Verwende Nomen immer mit ihrem Artikel (der, die, das) und markiere diese farblich (z.B. Blau für Maskulinum, Rot für Femininum, Grün für Neutrum), um das Lernen des grammatikalischen Geschlechts zu unterstützen.
+## 🎨 Design Guidelines
+- **Target Audience:** Kids aged 4 to 10. The UI should be colorful but uncluttered. Avoid complex text instructions; instead, use symbols, emojis, and clear visual feedback (e.g., glowing green for correct, gentle shaking for incorrect).
+- **Accessibility:** Large touch targets for small fingers on smartphones and tablets.
+- **Language Learning:** Always include articles (`der`, `die`, `das`) for nouns. Nouns are color-coded (Blue for masculine, Red for feminine, Green for neuter) to help kids learn grammatical genders.
 
 ---
 
-## 📜 Verhaltenskodex
-Bitte verhalte dich respektvoll gegenüber allen Mitgliedern der Community. Wir möchten ein offenes, freundliches und einladendes Umfeld für alle schaffen.
+## 📜 Code of Conduct
+Please be respectful and welcoming to all community members. We want to foster a friendly and collaborative environment.
