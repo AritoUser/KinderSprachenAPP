@@ -34,7 +34,7 @@ jobs:
       - name: Compile Zig Core to WebAssembly
         run: |
           mkdir -p assets/wasm
-          zig build -Doptimize=ReleaseSmall --summary all
+          zig build --release=small --summary all
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

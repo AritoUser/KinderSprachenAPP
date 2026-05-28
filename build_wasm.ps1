@@ -21,7 +21,8 @@ if (-not (Test-Path $wasmDir)) {
 Write-Host "Compiling Zig Core to WebAssembly..." -ForegroundColor Cyan
 
 # Run zig build
-& $zigExe build --summary all
+& $zigExe build --release=small --summary all
+
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Successfully compiled! Wasm file located at: assets/wasm/core.wasm" -ForegroundColor Green
