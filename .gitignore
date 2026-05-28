@@ -1,0 +1,17 @@
+# Zig build directories
+zig-cache/
+zig-out/
+
+# Local Zig compiler toolchain
+tools/
+*.zip
+*.tar.xz
+
+# Compiled assets
+assets/wasm/
+
+# IDEs and OS files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
