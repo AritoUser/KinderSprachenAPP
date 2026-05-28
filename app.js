@@ -48,21 +48,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Register Progressive Web App Service Worker
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
+        // Track whether we are already refreshing the page to avoid infinite loops
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+
         navigator.serviceWorker.register('sw.js').then((reg) => {
             console.log('ServiceWorker registered with scope:', reg.scope);
             
-            // Listen for updates
+            // Periodically check for updates on the server
+            setInterval(() => {
+                reg.update();
+            }, 60 * 1000); // Check every minute
+            
+            // Listen for new service workers installing
             reg.addEventListener('updatefound', () => {
                 const newWorker = reg.installing;
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New version available! Show toast
+                        // New worker is installed and ready to take control. Prompt user.
                         showUpdateToast(reg);
                     }
                 });
             });
             
-            // If there's an active waiting worker, show update toast
+            // If there is already a waiting worker from a previous session, prompt user
             if (reg.waiting) {
                 showUpdateToast(reg);
             }
@@ -77,17 +91,21 @@ function showUpdateToast(registration) {
     toast.classList.remove('hidden');
     
     document.getElementById('update-btn').onclick = () => {
+        // Tell the waiting worker to activate
         if (registration.waiting) {
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+            // Fallback reload if worker reference was lost
+            window.location.reload();
         }
         toast.classList.add('hidden');
-        window.location.reload();
     };
     
     document.getElementById('close-toast-btn').onclick = () => {
         toast.classList.add('hidden');
     };
 }
+
 
 // --- 3. WASM INTEGRATION ---
 async function loadWasm() {
