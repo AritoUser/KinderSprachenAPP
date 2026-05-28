@@ -137,4 +137,17 @@ export fn getShuffleBufferMaxSize() usize {
     return 64;
 }
 
+// Custom Panic Handler for freestanding WebAssembly.
+// Intercepts runtime errors and reports them to JavaScript.
+extern fn jsPanic(ptr: [*]const u8, len: usize) void;
+
+pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, ret_addr: ?usize) noreturn {
+    _ = error_return_trace;
+    _ = ret_addr;
+    jsPanic(msg.ptr, msg.len);
+    while (true) {
+        // Infinite loop to satisfy 'noreturn' in freestanding WebAssembly
+    }
+}
+
 

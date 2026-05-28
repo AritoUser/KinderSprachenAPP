@@ -70,12 +70,21 @@ body.dark-mode {
         radial-gradient(at 90% 80%, rgba(46, 196, 182, 0.08) 0px, transparent 50%);
 }
 
+body.dark-mode .game-overlay {
+    background: rgba(15, 18, 29, 0.9);
+}
+
 /* Reset and Base Styles */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    background-color: var(--bg-app);
+    color: var(--text-color);
 }
 
 body {
@@ -954,6 +963,30 @@ button {
     border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+}
+
+/* Debug Console Panel */
+.debug-log-container {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-small);
+    padding: 0.75rem;
+    max-height: 150px;
+    overflow-y: auto;
+    margin: 1rem 0;
+}
+
+.debug-log-container pre {
+    font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text-color);
+    text-align: left;
+}
+
+body.dark-mode .debug-log-container {
+    background: rgba(0, 0, 0, 0.35);
 }
 
 .settings-card h3 {

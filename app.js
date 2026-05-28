@@ -1,5 +1,29 @@
 // app.js
 
+// --- DEBUG LOGGING ENGINE ---
+const debugLogs = [];
+function logDebug(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const formatted = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+    debugLogs.push(formatted);
+    console.log(formatted);
+    
+    if (debugLogs.length > 100) debugLogs.shift();
+    
+    const outputEl = document.getElementById('debug-log-output');
+    if (outputEl) {
+        outputEl.textContent = debugLogs.join('\n');
+    }
+}
+
+// Global error handlers
+window.addEventListener('error', (event) => {
+    logDebug(`${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, 'error');
+});
+window.addEventListener('unhandledrejection', (event) => {
+    logDebug(`Unhandled promise rejection: ${event.reason}`, 'error');
+});
+
 // --- 1. CONFIGURATION & STATE ---
 const CONFIG = {
     vocabPath: 'content/vocabulary.json',
@@ -61,7 +85,7 @@ function registerServiceWorker() {
         });
 
         navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
-            console.log('ServiceWorker registered with scope:', reg.scope);
+            logDebug(`ServiceWorker registered with scope: ${reg.scope}`);
             
             // Periodically check for updates on the server
             setInterval(() => {
@@ -70,10 +94,12 @@ function registerServiceWorker() {
             
             // Listen for new service workers installing
             reg.addEventListener('updatefound', () => {
+                logDebug('New ServiceWorker update found. Installing...');
                 const newWorker = reg.installing;
                 newWorker.addEventListener('statechange', () => {
+                    logDebug(`ServiceWorker install state changed: ${newWorker.state}`);
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New worker is installed and ready to take control. Prompt user.
+                        logDebug('New ServiceWorker installed. Displaying update toast.');
                         showUpdateToast(reg);
                     }
                 });
@@ -81,10 +107,11 @@ function registerServiceWorker() {
             
             // If there is already a waiting worker from a previous session, prompt user
             if (reg.waiting) {
+                logDebug('ServiceWorker has waiting worker from previous session. Displaying update toast.');
                 showUpdateToast(reg);
             }
         }).catch((err) => {
-            console.error('ServiceWorker registration failed:', err);
+            logDebug(`ServiceWorker registration failed: ${err.message}`, 'error');
         });
     }
 }
@@ -113,31 +140,40 @@ function showUpdateToast(registration) {
 // --- 3. WASM INTEGRATION ---
 async function loadWasm() {
     const loadingScreen = document.getElementById('wasm-loading-screen');
-    loadingScreen.classList.remove('hidden');
+    if (loadingScreen) loadingScreen.classList.remove('hidden');
     
     try {
+        logDebug('Fetching WebAssembly core...');
         const response = await fetch(CONFIG.wasmPath);
         if (!response.ok) throw new Error(`Wasm file could not be loaded: ${response.statusText}`);
         
+        logDebug('Instantiating WebAssembly core...');
         const wasmBytes = await response.arrayBuffer();
         const wasmObj = await WebAssembly.instantiate(wasmBytes, {
             env: {
-                // Free standing wasm environment imports if needed (none required for this simple core)
+                jsPanic: (ptr, len) => {
+                    const wasmMem = new Uint8Array(wasmExports.memory.buffer);
+                    const decoder = new TextDecoder();
+                    const message = decoder.decode(wasmMem.subarray(ptr, ptr + len));
+                    logDebug(`Zig Wasm Panic: ${message}`, 'error');
+                    alert(`A critical core engine error occurred: ${message}\nSwitching to JavaScript fallbacks.`);
+                    setupJsFallbacks();
+                }
             }
         });
         
         wasmExports = wasmObj.instance.exports;
-        console.log('Zig Core WebAssembly loaded successfully!');
+        logDebug('Zig Core WebAssembly loaded successfully!');
         
         // Initialize the random seed in Zig core
         if (wasmExports.initSeed) {
             wasmExports.initSeed(BigInt(Date.now()));
         }
     } catch (err) {
-        console.error('WebAssembly loading failed. Using JS Fallbacks.', err);
+        logDebug(`WebAssembly loading failed. Using JS Fallbacks. Error: ${err.message}`, 'error');
         setupJsFallbacks();
     } finally {
-        loadingScreen.classList.add('hidden');
+        if (loadingScreen) loadingScreen.classList.add('hidden');
     }
 }
 
@@ -233,6 +269,7 @@ function shuffleIndicesWithWasm(len) {
 // --- 4. DATA LOADING & SAVE ---
 async function loadVocabulary() {
     try {
+        logDebug('Fetching vocabulary database...');
         const response = await fetch(CONFIG.vocabPath);
         if (!response.ok) throw new Error('Vocabulary JSON could not be loaded');
         const defaultVocab = await response.json();
@@ -240,8 +277,9 @@ async function loadVocabulary() {
         const custom = JSON.parse(localStorage.getItem('custom_vocab')) || [];
         state.customVocabulary = custom;
         state.vocabulary = [...defaultVocab, ...custom];
+        logDebug(`Loaded ${state.vocabulary.length} words (default: ${defaultVocab.length}, custom: ${custom.length}).`);
     } catch (err) {
-        console.error('Vocabulary loading failed, using static fallback.', err);
+        logDebug(`Vocabulary load failed. Error: ${err.message}. Using static fallbacks.`, 'error');
         state.vocabulary = [
             { id: "hund", word: "der Hund", translation: "dog", category: "Tiere", emoji: "🐶", difficulty: 1 },
             { id: "katze", word: "die Katze", translation: "cat", category: "Tiere", emoji: "🐱", difficulty: 1 },
@@ -331,6 +369,27 @@ function initUI() {
     if (themeBtn) themeBtn.addEventListener('click', handleThemeToggle);
     const settingsThemeBtn = document.getElementById('settings-theme-toggle-btn');
     if (settingsThemeBtn) settingsThemeBtn.addEventListener('click', handleThemeToggle);
+
+    // Debug Log controls
+    const copyBtn = document.getElementById('copy-debug-logs-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(debugLogs.join('\n')).then(() => {
+                alert('Debug logs copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy logs: ' + err);
+            });
+        });
+    }
+    
+    const clearBtn = document.getElementById('clear-debug-logs-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            debugLogs.length = 0;
+            const outputEl = document.getElementById('debug-log-output');
+            if (outputEl) outputEl.textContent = 'No logs. System running normally.';
+        });
+    }
 
     // Check offline status
     const updateOnlineStatus = () => {
@@ -805,6 +864,14 @@ function handleAddVocab(e) {
     
     const article = articleSelect.value;
     const cleanWord = wordInput.value.trim();
+    const cleanTrans = transInput.value.trim();
+    const cleanEmoji = emojiInput.value.trim();
+    
+    // VALIDATION FOR ERROR HANDLING
+    if (!cleanWord || !cleanTrans || !cleanEmoji) {
+        alert('Please fill out all vocabulary fields (German Word, Translation, and Emoji) before adding a card!');
+        return;
+    }
     
     let finalWord = cleanWord;
     if (article !== '-') {
@@ -812,11 +879,11 @@ function handleAddVocab(e) {
     }
     
     const newCard = {
-        id: cleanWord.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        id: cleanWord.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Date.now(),
         word: finalWord,
-        translation: transInput.value.trim(),
+        translation: cleanTrans,
         category: catSelect.value,
-        emoji: emojiInput.value.trim(),
+        emoji: cleanEmoji,
         difficulty: parseInt(diffSelect.value)
     };
     
@@ -824,6 +891,7 @@ function handleAddVocab(e) {
     state.vocabulary.push(newCard);
     
     localStorage.setItem('custom_vocab', JSON.stringify(state.customVocabulary));
+    logDebug(`Added custom word card: "${newCard.word}" to category "${newCard.category}"`);
     
     wordInput.value = '';
     transInput.value = '';
