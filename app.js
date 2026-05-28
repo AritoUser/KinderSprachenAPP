@@ -5,6 +5,7 @@ const CONFIG = {
     vocabPath: 'content/vocabulary.json',
     wasmPath: 'assets/wasm/core.wasm',
     defaultXP: 0,
+    version: 'v1.0.5'
 };
 
 let state = {
@@ -30,6 +31,7 @@ let wasmExports = null;
 document.addEventListener('DOMContentLoaded', async () => {
     loadProgress();
     initUI();
+    document.getElementById('app-version-badge').textContent = CONFIG.version;
     registerServiceWorker();
     
     // Load Vocabulary
