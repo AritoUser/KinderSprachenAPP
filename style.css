@@ -1234,3 +1234,9 @@ button {
         display: none; /* Hide 8th card or adapt memory layout */
     }
 }
+
+/* Global utility class to hide elements */
+.hidden {
+    display: none !important;
+}
+
