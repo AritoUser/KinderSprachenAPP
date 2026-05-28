@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kinder-Deutsch-Lern-App | Spielerisch Deutsch lernen</title>
+    
+    <!-- SEO and Meta Tags -->
+    <meta name="description" content="Kostenlose, offline-fähige Sprachlern-App für Kinder. Spielerisch Deutsch lernen mit Bilderrätseln, Buchstabieren und Memory.">
+    <meta name="theme-color" content="#4A90E2">
+    
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="manifest.json" id="pwa-manifest">
+    
+    <!-- Google Fonts: Outfit (Rounded & Friendly for kids) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Update Notification Toast -->
+    <div id="update-toast" class="toast hidden" role="alert">
+        <div class="toast-content">
+            <span class="toast-icon">🚀</span>
+            <div class="toast-text">
+                <h4>Update verfügbar!</h4>
+                <p>Eine neue Version der App ist bereit.</p>
+            </div>
+        </div>
+        <div class="toast-actions">
+            <button id="update-btn" class="btn btn-primary btn-small">Aktualisieren</button>
+            <button id="close-toast-btn" class="btn btn-secondary btn-small">Später</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo" id="nav-logo">
+                <span class="logo-emoji">🎮</span>
+                <h1 class="logo-text">DeutschSpiel</h1>
+            </div>
+            
+            <!-- User Progress Indicator -->
+            <div class="header-progress">
+                <div class="level-badge">
+                    <span>Level</span>
+                    <strong id="user-level">1</strong>
+                </div>
+                <div class="xp-bar-container">
+                    <div class="xp-bar-fill" id="user-xp-fill" style="width: 0%;"></div>
+                    <span class="xp-text" id="user-xp-text">0 / 100 XP</span>
+                </div>
+            </div>
+            
+            <nav class="header-nav">
+                <button id="nav-dashboard-btn" class="nav-btn active" title="Spielen">🎮</button>
+                <button id="nav-creator-btn" class="nav-btn" title="Vokabeln hinzufügen">➕</button>
+                <button id="nav-settings-btn" class="nav-btn" title="Einstellungen">⚙️</button>
+            </nav>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            
+            <!-- SECTION 1: DASHBOARD (Category Selection & Game Modes) -->
+            <section id="screen-dashboard" class="screen active">
+                <div class="hero-section">
+                    <h2>Hallo! Was wollen wir heute lernen? 🌟</h2>
+                    <p>Wähle ein Thema aus und spiele ein Spiel!</p>
+                </div>
+                
+                <!-- Category Grid -->
+                <div class="categories-grid" id="categories-container">
+                    <!-- Dynamic Category Cards will be injected here -->
+                </div>
+                
+                <!-- Game Mode Modal (Hidden by default, shown when category selected) -->
+                <div id="game-mode-modal" class="modal hidden">
+                    <div class="modal-content glass">
+                        <button class="modal-close" id="close-game-modal">&times;</button>
+                        <h3 id="modal-category-title">Thema wählen</h3>
+                        <p class="modal-subtitle">Wähle dein Lieblingsspiel:</p>
+                        
+                        <div class="games-selection">
+                            <!-- Game 1 -->
+                            <button class="game-card" id="start-game-match">
+                                <span class="game-icon">🖼️</span>
+                                <div class="game-details">
+                                    <h4>Wort-Bild-Rätsel</h4>
+                                    <p>Finde das richtige Wort zum Bild!</p>
+                                </div>
+                            </button>
+                            
+                            <!-- Game 2 -->
+                            <button class="game-card" id="start-game-spelling">
+                                <span class="game-icon">🔤</span>
+                                <div class="game-details">
+                                    <h4>Buchstabieren</h4>
+                                    <p>Bringe die Buchstaben in die richtige Reihenfolge!</p>
+                                </div>
+                            </button>
+                            
+                            <!-- Game 3 -->
+                            <button class="game-card" id="start-game-memory">
+                                <span class="game-icon">🎴</span>
+                                <div class="game-details">
+                                    <h4>Memory</h4>
+                                    <p>Finde die passenden Bild-Wort Paare!</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: GAME AREA -->
+            <section id="screen-game" class="screen hidden">
+                <div class="game-header">
+                    <button class="btn-back" id="game-back-btn">⬅️ Zurück</button>
+                    <div class="game-title-container">
+                        <span id="game-active-icon">🎮</span>
+                        <h3 id="game-active-name">Spiel</h3>
+                    </div>
+                    <div class="game-score-counter">
+                        <span>Punkte:</span>
+                        <strong id="game-score">0</strong>
+                    </div>
+                </div>
+                
+                <!-- Game Board Container -->
+                <div class="game-board-wrapper">
+                    <!-- Loading WebAssembly indicator -->
+                    <div id="wasm-loading-screen" class="hidden">
+                        <div class="loader"></div>
+                        <p>Zig-Core wird geladen...</p>
+                    </div>
+                    
+                    <!-- Game 1: Match View -->
+                    <div id="game-view-match" class="game-view hidden">
+                        <div class="question-emoji" id="match-question-emoji">🐱</div>
+                        <p class="question-text">Wie heißt dieses Bild auf Deutsch?</p>
+                        <div class="options-grid" id="match-options-container">
+                            <!-- 4 choice buttons will be injected here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Game 2: Spelling View -->
+                    <div id="game-view-spelling" class="game-view hidden">
+                        <div class="question-emoji" id="spelling-question-emoji">🍎</div>
+                        <p class="question-text">Schreibe das Wort:</p>
+                        
+                        <!-- Expected Word Length Indicator / Answer Blocks -->
+                        <div class="spelling-answer-slots" id="spelling-slots"></div>
+                        
+                        <!-- Shuffled Letters for clicking -->
+                        <div class="spelling-letters-pool" id="spelling-letters-pool"></div>
+                        
+                        <div class="spelling-actions">
+                            <button class="btn btn-secondary" id="spelling-clear-btn">❌ Löschen</button>
+                            <button class="btn btn-primary" id="spelling-submit-btn">✔️ Prüfen</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Game 3: Memory View -->
+                    <div id="game-view-memory" class="game-view hidden">
+                        <p class="question-text">Finde alle Paare! Klicke auf die Karten.</p>
+                        <div class="memory-grid" id="memory-grid-container">
+                            <!-- 8 cards will be injected here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Game Over Screen Overlay -->
+                <div id="game-over-overlay" class="game-overlay hidden">
+                    <div class="overlay-card glass text-center">
+                        <span class="victory-emoji">🏆</span>
+                        <h2>Klasse gemacht!</h2>
+                        <p>Du hast alle Aufgaben gelöst!</p>
+                        <div class="xp-gain-badge">+<span id="xp-gained">0</span> XP</div>
+                        <button class="btn btn-primary btn-large" id="game-finish-btn">Weiter</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: VISUAL CONTENT CREATOR -->
+            <section id="screen-creator" class="screen hidden">
+                <div class="hero-section">
+                    <h2>Inhalts-Editor (Content Creator) ✍️</h2>
+                    <p>Hier kannst du ganz einfach neue Vokabeln hinzufügen. Du benötigst keine Programmierkenntnisse!</p>
+                </div>
+                
+                <div class="creator-container glass">
+                    <form id="vocab-form" class="creator-form">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="vocab-article">Artikel</label>
+                                <select id="vocab-article">
+                                    <option value="der">der (männlich - blau 🔵)</option>
+                                    <option value="die">die (weiblich - rot 🔴)</option>
+                                    <option value="das">das (sächlich - grün 🟢)</option>
+                                    <option value="-">kein Artikel (z.B. Farben)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocab-word">Deutsches Wort</label>
+                                <input type="text" id="vocab-word" placeholder="z.B. Tisch, Hund, Rot" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="vocab-translation">Übersetzung (z.B. Englisch)</label>
+                                <input type="text" id="vocab-translation" placeholder="z.B. table, dog, red" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocab-emoji">Emoji (Bildhilfe)</label>
+                                <input type="text" id="vocab-emoji" placeholder="z.B. 🪑, 🐕, 🔴" maxLength="2" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="vocab-category">Kategorie</label>
+                                <select id="vocab-category">
+                                    <option value="Tiere">Tiere 🐶</option>
+                                    <option value="Essen">Essen 🍎</option>
+                                    <option value="Farben">Farben 🔴</option>
+                                    <option value="Schule">Schule 🎒</option>
+                                    <option value="Kleidung">Kleidung 🧥</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocab-difficulty">Schwierigkeit</label>
+                                <select id="vocab-difficulty">
+                                    <option value="1">Einfach ⭐</option>
+                                    <option value="2">Mittel ⭐⭐</option>
+                                    <option value="3">Schwer ⭐⭐⭐</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-large width-100">Karte Hinzufügen ➕</button>
+                    </form>
+                    
+                    <div class="creator-preview">
+                        <h3>Aktuelle Vokabelliste (<span id="vocab-count">0</span> Wörter)</h3>
+                        <p class="description">Du kannst diese Liste als `vocabulary.json` exportieren und damit die Datei im Git-Projekt ersetzen.</p>
+                        
+                        <div class="vocab-table-wrapper">
+                            <table class="vocab-table">
+                                <thead>
+                                    <tr>
+                                        <th>Bild</th>
+                                        <th>Deutsch</th>
+                                        <th>Übersetzung</th>
+                                        <th>Kategorie</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vocab-table-body">
+                                    <!-- Vocabulary items will be rendered here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="creator-actions">
+                            <button id="export-json-btn" class="btn btn-success btn-large">📥 Vokabel-Datei (JSON) exportieren</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: SETTINGS & ABOUT -->
+            <section id="screen-settings" class="screen hidden">
+                <div class="hero-section">
+                    <h2>Einstellungen & Info ⚙️</h2>
+                    <p>Hier kannst du deine Einstellungen anpassen und App-Informationen einsehen.</p>
+                </div>
+                
+                <div class="settings-grid">
+                    <!-- Storage Settings Card -->
+                    <div class="settings-card glass">
+                        <h3>💾 Speicher & Fortschritt</h3>
+                        <p>Dein Spielstand wird lokal auf diesem Gerät gespeichert und bleibt auch bei Updates erhalten.</p>
+                        <div class="settings-actions">
+                            <button id="reset-progress-btn" class="btn btn-danger">🗑️ Fortschritt zurücksetzen</button>
+                        </div>
+                    </div>
+                    
+                    <!-- System Info Card -->
+                    <div class="settings-card glass">
+                        <h3>ℹ️ System-Informationen</h3>
+                        <ul class="info-list">
+                            <li><strong>Online-Status:</strong> <span id="online-status-badge" class="badge green">Online</span></li>
+                            <li><strong>App Version:</strong> <span class="badge blue">v1.0.0</span></li>
+                            <li><strong>Core Engine:</strong> <span class="badge purple">Zig + WebAssembly</span></li>
+                            <li><strong>Lizenz:</strong> MIT (Freie Software)</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Developer Check for updates mock -->
+                    <div class="settings-card glass">
+                        <h3>🔄 GitHub-Updates testen</h3>
+                        <p>Prüfe manuell, ob eine neuere Version der App im Repository vorhanden ist.</p>
+                        <div class="settings-actions">
+                            <button id="trigger-update-check-btn" class="btn btn-secondary">🔍 Nach Updates suchen</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+        
+        <!-- App Footer -->
+        <footer class="app-footer">
+            <p>Made with ❤️ and ⚡ Zig WebAssembly for children learning German. Quelloffen auf GitHub.</p>
+        </footer>
+    </div>
+
+    <!-- Script imports -->
+    <script src="app.js"></script>
+</body>
+</html>

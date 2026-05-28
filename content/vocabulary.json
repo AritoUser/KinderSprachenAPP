@@ -1,0 +1,202 @@
+[
+  {
+    "id": "hund",
+    "word": "der Hund",
+    "translation": "dog",
+    "category": "Tiere",
+    "emoji": "🐶",
+    "difficulty": 1
+  },
+  {
+    "id": "katze",
+    "word": "die Katze",
+    "translation": "cat",
+    "category": "Tiere",
+    "emoji": "🐱",
+    "difficulty": 1
+  },
+  {
+    "id": "maus",
+    "word": "die Maus",
+    "translation": "mouse",
+    "category": "Tiere",
+    "emoji": "🐭",
+    "difficulty": 1
+  },
+  {
+    "id": "vogel",
+    "word": "der Vogel",
+    "translation": "bird",
+    "category": "Tiere",
+    "emoji": "🐦",
+    "difficulty": 1
+  },
+  {
+    "id": "pferd",
+    "word": "das Pferd",
+    "translation": "horse",
+    "category": "Tiere",
+    "emoji": "🐴",
+    "difficulty": 2
+  },
+  {
+    "id": "fisch",
+    "word": "der Fisch",
+    "translation": "fish",
+    "category": "Tiere",
+    "emoji": "🐟",
+    "difficulty": 1
+  },
+  {
+    "id": "apfel",
+    "word": "der Apfel",
+    "translation": "apple",
+    "category": "Essen",
+    "emoji": "🍎",
+    "difficulty": 1
+  },
+  {
+    "id": "banane",
+    "word": "die Banane",
+    "translation": "banana",
+    "category": "Essen",
+    "emoji": "🍌",
+    "difficulty": 1
+  },
+  {
+    "id": "brot",
+    "word": "das Brot",
+    "translation": "bread",
+    "category": "Essen",
+    "emoji": "🍞",
+    "difficulty": 1
+  },
+  {
+    "id": "milch",
+    "word": "die Milch",
+    "translation": "milk",
+    "category": "Essen",
+    "emoji": "🥛",
+    "difficulty": 1
+  },
+  {
+    "id": "erdbeere",
+    "word": "die Erdbeere",
+    "translation": "strawberry",
+    "category": "Essen",
+    "emoji": "🍓",
+    "difficulty": 2
+  },
+  {
+    "id": "pizza",
+    "word": "die Pizza",
+    "translation": "pizza",
+    "category": "Essen",
+    "emoji": "🍕",
+    "difficulty": 1
+  },
+  {
+    "id": "rot",
+    "word": "Rot",
+    "translation": "red",
+    "category": "Farben",
+    "emoji": "🔴",
+    "difficulty": 1
+  },
+  {
+    "id": "blau",
+    "word": "Blau",
+    "translation": "blue",
+    "category": "Farben",
+    "emoji": "🔵",
+    "difficulty": 1
+  },
+  {
+    "id": "gruen",
+    "word": "Grün",
+    "translation": "green",
+    "category": "Farben",
+    "emoji": "🟢",
+    "difficulty": 1
+  },
+  {
+    "id": "gelb",
+    "word": "Gelb",
+    "translation": "yellow",
+    "category": "Farben",
+    "emoji": "🟡",
+    "difficulty": 1
+  },
+  {
+    "id": "orange",
+    "word": "Orange",
+    "translation": "orange",
+    "category": "Farben",
+    "emoji": "🟠",
+    "difficulty": 1
+  },
+  {
+    "id": "buch",
+    "word": "das Buch",
+    "translation": "book",
+    "category": "Schule",
+    "emoji": "📖",
+    "difficulty": 1
+  },
+  {
+    "id": "stift",
+    "word": "der Stift",
+    "translation": "pen / pencil",
+    "category": "Schule",
+    "emoji": "✏️",
+    "difficulty": 1
+  },
+  {
+    "id": "schere",
+    "word": "die Schere",
+    "translation": "scissors",
+    "category": "Schule",
+    "emoji": "✂️",
+    "difficulty": 2
+  },
+  {
+    "id": "tasche",
+    "word": "die Tasche",
+    "translation": "bag",
+    "category": "Schule",
+    "emoji": "🎒",
+    "difficulty": 2
+  },
+  {
+    "id": "jacke",
+    "word": "die Jacke",
+    "translation": "jacket",
+    "category": "Kleidung",
+    "emoji": "🧥",
+    "difficulty": 2
+  },
+  {
+    "id": "schuh",
+    "word": "der Schuh",
+    "translation": "shoe",
+    "category": "Kleidung",
+    "emoji": "👟",
+    "difficulty": 1
+  },
+  {
+    "id": "hose",
+    "word": "die Hose",
+    "translation": "pants / trousers",
+    "category": "Kleidung",
+    "emoji": "👖",
+    "difficulty": 1
+  },
+  {
+    "id": "muetze",
+    "word": "die Mütze",
+    "translation": "beanie / cap",
+    "category": "Kleidung",
+    "emoji": "🧢",
+    "difficulty": 2
+  }
+]
