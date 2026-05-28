@@ -521,7 +521,8 @@ function loadMatchRound() {
     
     finalChoices.forEach(choice => {
         const btn = document.createElement('button');
-        btn.className = 'option-btn';
+        btn.className = 'option-btn notranslate';
+        btn.setAttribute('translate', 'no');
         
         const article = choice.word.split(' ')[0].toLowerCase();
         if (article === 'der') btn.classList.add('article-btn-der');
@@ -581,7 +582,8 @@ function loadSpellingRound() {
     slotsContainer.innerHTML = '';
     letters.forEach(() => {
         const slot = document.createElement('div');
-        slot.className = 'letter-slot';
+        slot.className = 'letter-slot notranslate';
+        slot.setAttribute('translate', 'no');
         slotsContainer.appendChild(slot);
     });
     
@@ -594,7 +596,8 @@ function loadSpellingRound() {
     
     shuffledLetters.forEach((letter, index) => {
         const btn = document.createElement('button');
-        btn.className = 'pool-letter';
+        btn.className = 'pool-letter notranslate';
+        btn.setAttribute('translate', 'no');
         btn.textContent = letter;
         btn.dataset.poolIndex = index;
         
@@ -685,7 +688,8 @@ function loadMemoryGame() {
         cardEl.dataset.id = card.id;
         
         const front = document.createElement('div');
-        front.className = 'memory-card-front';
+        front.className = 'memory-card-front notranslate';
+        front.setAttribute('translate', 'no');
         front.textContent = card.value;
         
         if (card.type === 'word') {
