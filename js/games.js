@@ -540,6 +540,9 @@ export function checkMemoryMatch() {
 }
 
 export function endGame() {
+    const xpGainedEl = document.getElementById('xp-gained');
+    if (xpGainedEl) xpGainedEl.textContent = state.gameScore;
+    
     document.getElementById('game-over-overlay').classList.remove('hidden');
     playLevelUpSound();
 }
