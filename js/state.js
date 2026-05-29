@@ -82,32 +82,48 @@ export function updateXPBar() {
     if (lvlEl) lvlEl.textContent = state.level;
     
     const wasmExports = getWasmExports();
-    if (wasmExports) {
-        const currentLvlXP = wasmExports.xpForCurrentLevel(state.level);
-        const nextLvlXP = wasmExports.xpForNextLevel(state.level);
-        const relativeXP = state.xp - currentLvlXP;
-        const totalNeeded = nextLvlXP - currentLvlXP;
-        
-        const percentage = Math.min(Math.max((relativeXP / totalNeeded) * 100, 0), 100);
-        
-        const xpFillEl = document.getElementById('user-xp-fill');
-        if (xpFillEl) xpFillEl.style.width = `${percentage}%`;
-        
-        const xpTextEl = document.getElementById('user-xp-text');
-        if (xpTextEl) xpTextEl.textContent = `${state.xp} / ${nextLvlXP} XP`;
+    
+    let currentLvlXP, nextLvlXP;
+    if (wasmExports && wasmExports.xpForCurrentLevel && wasmExports.xpForNextLevel) {
+        currentLvlXP = wasmExports.xpForCurrentLevel(state.level);
+        nextLvlXP = wasmExports.xpForNextLevel(state.level);
+    } else {
+        // JS fallback
+        currentLvlXP = (state.level <= 1) ? 0 : (state.level - 1) * (state.level - 1) * 100;
+        nextLvlXP = state.level * state.level * 100;
     }
+    
+    const relativeXP = state.xp - currentLvlXP;
+    const totalNeeded = nextLvlXP - currentLvlXP;
+    
+    const percentage = totalNeeded > 0 ? Math.min(Math.max((relativeXP / totalNeeded) * 100, 0), 100) : 0;
+    
+    const xpFillEl = document.getElementById('user-xp-fill');
+    if (xpFillEl) xpFillEl.style.width = `${percentage}%`;
+    
+    const xpTextEl = document.getElementById('user-xp-text');
+    if (xpTextEl) xpTextEl.textContent = `${state.xp} / ${nextLvlXP} XP`;
 }
 
 export function addXP(amount) {
+    if (!amount || amount <= 0) return;
+    
     state.xp += amount;
+    logDebug(`+${amount} XP gained! Total: ${state.xp} XP`);
     
     const wasmExports = getWasmExports();
-    if (wasmExports) {
-        const newLevel = wasmExports.calculateLevel(state.xp);
-        if (newLevel > state.level) {
-            state.level = newLevel;
-            showLevelUpEffect();
-        }
+    let newLevel;
+    if (wasmExports && wasmExports.calculateLevel) {
+        newLevel = wasmExports.calculateLevel(state.xp);
+    } else {
+        // JS fallback
+        newLevel = Math.floor(Math.sqrt(state.xp / 100)) + 1;
+    }
+    
+    if (newLevel > state.level) {
+        state.level = newLevel;
+        logDebug(`🎉 Level UP! Now Level ${state.level}`);
+        showLevelUpEffect();
     }
     
     saveProgress();
