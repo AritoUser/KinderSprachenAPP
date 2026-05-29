@@ -1229,7 +1229,26 @@ function startConfetti() {
         });
     }
     
-    function anim            ctx.restore();
+    function animate() {
+        if (!confettiActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let alive = false;
+        confettiParticles.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.rotation += p.rotationSpeed;
+            
+            if (p.y < canvas.height) {
+                alive = true;
+            }
+            
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation * Math.PI / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.restore();
         });
         
         if (alive) {
