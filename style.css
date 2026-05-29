@@ -1461,6 +1461,43 @@ select option {
     }
 }
 
+/* Help button & Translation Bubble */
+.btn-help {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning);
+    border-radius: 50%;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    transition: transform var(--transition-fast);
+    padding: 0;
+}
+
+.btn-help:hover {
+    transform: scale(1.1);
+}
+
+.help-text-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-small);
+    color: var(--color-warning);
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    animation: scaleUp 0.25s ease;
+    font-size: 1.1rem;
+}
+
 /* Global utility class to hide elements */
 .hidden {
     display: none !important;

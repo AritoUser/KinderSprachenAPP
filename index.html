@@ -146,7 +146,8 @@
                     <!-- Game 1: Match View -->
                     <div id="game-view-match" class="game-view hidden">
                         <div class="question-emoji" id="match-question-emoji">🐱</div>
-                        <p class="question-text">What is this picture in German?</p>
+                        <p class="question-text">What is this picture in German? <button class="btn-help" id="match-help-btn" title="Help">💡</button></p>
+                        <div class="help-text-bubble hidden" id="match-help-text"></div>
                         <div class="options-grid" id="match-options-container">
                             <!-- 4 choice buttons will be injected here -->
                         </div>
@@ -155,7 +156,8 @@
                     <!-- Game 2: Spelling View -->
                     <div id="game-view-spelling" class="game-view hidden">
                         <div class="question-emoji" id="spelling-question-emoji">🍎</div>
-                        <p class="question-text">Spell the word:</p>
+                        <p class="question-text">Spell the word: <button class="btn-help" id="spelling-help-btn" title="Help">💡</button></p>
+                        <div class="help-text-bubble hidden" id="spelling-help-text"></div>
                         
                         <!-- Expected Word Length Indicator / Answer Blocks -->
                         <div class="spelling-answer-slots" id="spelling-slots"></div>

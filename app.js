@@ -467,6 +467,31 @@ function initUI() {
             applyLanguage(e.target.value);
         });
     }
+
+    // Help buttons logic
+    const matchHelpText = document.getElementById('match-help-text');
+    const matchHelpBtn = document.getElementById('match-help-btn');
+    if (matchHelpBtn && matchHelpText) {
+        matchHelpBtn.addEventListener('click', () => {
+            const correctCard = state.sessionCards[state.currentCardIndex];
+            if (correctCard) {
+                matchHelpText.textContent = getWordTranslation(correctCard);
+                matchHelpText.classList.toggle('hidden');
+            }
+        });
+    }
+
+    const spellingHelpText = document.getElementById('spelling-help-text');
+    const spellingHelpBtn = document.getElementById('spelling-help-btn');
+    if (spellingHelpBtn && spellingHelpText) {
+        spellingHelpBtn.addEventListener('click', () => {
+            const correctCard = state.sessionCards[state.currentCardIndex];
+            if (correctCard) {
+                spellingHelpText.textContent = getWordTranslation(correctCard);
+                spellingHelpText.classList.toggle('hidden');
+            }
+        });
+    }
 }
 
 function switchScreen(screenId) {
@@ -629,6 +654,10 @@ function loadMatchRound() {
         return;
     }
     
+    // Hide help text from previous round
+    const helpText = document.getElementById('match-help-text');
+    if (helpText) helpText.classList.add('hidden');
+    
     const correctCard = state.sessionCards[state.currentCardIndex];
     document.getElementById('match-question-emoji').textContent = correctCard.emoji;
     
@@ -697,6 +726,10 @@ function loadSpellingRound() {
         endGame();
         return;
     }
+    
+    // Hide help text from previous round
+    const helpText = document.getElementById('spelling-help-text');
+    if (helpText) helpText.classList.add('hidden');
     
     const correctCard = state.sessionCards[state.currentCardIndex];
     document.getElementById('spelling-question-emoji').textContent = correctCard.emoji;
@@ -970,7 +1003,7 @@ function renderCreatorTable() {
         tr.innerHTML = `
             <td style="font-size: 1.5rem;">${item.emoji}</td>
             <td><strong>${item.word}</strong></td>
-            <td style="color: var(--text-muted);">${item.translation}</td>
+            <td style="color: var(--text-muted);">${getWordTranslation(item)}</td>
             <td><span class="badge blue">${item.category}</span></td>
             <td>
                 ${isCustom ? `<button class="badge-delete-btn" onclick="deleteCustomVocab('${item.id}')" title="Delete">❌</button>` : `<span style="color: var(--text-muted); font-size: 0.8rem;">Default</span>`}
@@ -1388,4 +1421,72 @@ function applyLanguage(lang) {
     if (document.getElementById('screen-stickers').classList.contains('active')) {
         renderStickerAlbum();
     }
+    
+    // Refresh Creator Table to update vocabulary translations
+    renderCreatorTable();
+}
+
+// --- DEFAULT VOCABULARY TRANSLATIONS DICTIONARY ---
+const VOCAB_TRANSLATIONS = {
+    hund: { en: "dog", ar: "كلب", uk: "собака", tr: "köpek", ru: "собака" },
+    katze: { en: "cat", ar: "قطة", uk: "кішка", tr: "kedi", ru: "кошка" },
+    maus: { en: "mouse", ar: "فأر", uk: "миша", tr: "fare", ru: "мышь" },
+    vogel: { en: "bird", ar: "طائر", uk: "птах", tr: "kuş", ru: "птица" },
+    pferd: { en: "horse", ar: "حصان", uk: "кінь", tr: "at", ru: "лошадь" },
+    fisch: { en: "fish", ar: "سمكة", uk: "риба", tr: "balık", ru: "рыба" },
+    apfel: { en: "apple", ar: "تفاحة", uk: "яблуко", tr: "elma", ru: "яблоко" },
+    banane: { en: "banana", ar: "موز", uk: "банан", tr: "muz", ru: "банан" },
+    brot: { en: "bread", ar: "خبز", uk: "хліб", tr: "ekmek", ru: "хлеб" },
+    milch: { en: "milk", ar: "حليب", uk: "молоко", tr: "süt", ru: "молоко" },
+    erdbeere: { en: "strawberry", ar: "فراولة", uk: "полуниця", tr: "çilek", ru: "клубника" },
+    pizza: { en: "pizza", ar: "بيتزا", uk: "піца", tr: "pizza", ru: "пицца" },
+    rot: { en: "red", ar: "أحمر", uk: "червоний", tr: "kırmızı", ru: "красный" },
+    blau: { en: "blue", ar: "أзرق", uk: "синій", tr: "mavi", ru: "синий" },
+    gruen: { en: "green", ar: "أخضر", uk: "зелений", tr: "yeşil", ru: "зеленый" },
+    gelb: { en: "yellow", ar: "أصفر", uk: "жовтий", tr: "sarı", ru: "желтый" },
+    orange: { en: "orange", ar: "برتقالي", uk: "помаранчевий", tr: "turuncu", ru: "оранжевый" },
+    buch: { en: "book", ar: "كتاب", uk: "книга", tr: "kitap", ru: "книга" },
+    stift: { en: "pen / pencil", ar: "قلم", uk: "олівець / ручка", tr: "kalem", ru: "карандаш / ручка" },
+    schere: { en: "scissors", ar: "مقص", uk: "ножиці", tr: "makas", ru: "ножницы" },
+    tasche: { en: "bag", ar: "حقيبة", uk: "сумка", tr: "çanta", ru: "сумка" },
+    jacke: { en: "jacket", ar: "سترة", uk: "куртка", tr: "ceket", ru: "куртка" },
+    schuh: { en: "shoe", ar: "حذاء", uk: "взуття / черевик", tr: "ayakkabı", ru: "обувь / ботинок" },
+    hose: { en: "pants / trousers", ar: "بنطال", uk: "штани", tr: "pantolon", ru: "штаны" },
+    muetze: { en: "beanie / cap", ar: "قبعة", uk: "шапка", tr: "bere", ru: "шапка" },
+    auge: { en: "eye", ar: "عين", uk: "око", tr: "göz", ru: "глаз" },
+    ohr: { en: "ear", ar: "أذن", uk: "вухо", tr: "kulak", ru: "ухо" },
+    nase: { en: "nose", ar: "أنф", uk: "ніс", tr: "burun", ru: "нос" },
+    mund: { en: "mouth", ar: "فم", uk: "рот", tr: "ağız", ru: "рот" },
+    hand: { en: "hand", ar: "يد", uk: "рука", tr: "el", ru: "рука" },
+    fuss: { en: "foot", ar: "قدم", uk: "нога / стопа", tr: "ayak", ru: "нога / стопа" },
+    mama: { en: "mom / mother", ar: "أمي", uk: "мама", tr: "anne", ru: "мама" },
+    papa: { en: "dad / father", ar: "أبي", uk: "тато", tr: "baba", ru: "папа" },
+    baby: { en: "baby", ar: "طفل رضيع", uk: "дитина / немовля", tr: "bebek", ru: "малыш / ребенок" },
+    bruder: { en: "brother", ar: "أخ", uk: "брат", tr: "erkek kardeş", ru: "брат" },
+    schwester: { en: "sister", ar: "أخت", uk: "сестра", tr: "kız kardeş", ru: "сестра" },
+    haus: { en: "house", ar: "بيت", uk: "будинок", tr: "ev", ru: "дом" },
+    bett: { en: "bed", ar: "سرير", uk: "ліжко", tr: "yatak", ru: "кровать" },
+    tisch: { en: "table", ar: "طاولة", uk: "стіл", tr: "masa", ru: "стол" },
+    tuer: { en: "door", ar: "باب", uk: "двері", tr: "kapı", ru: "дверь" },
+    ball: { en: "ball", ar: "كرة", uk: "м'яч", tr: "top", ru: "мяч" },
+    puppe: { en: "doll", ar: "دمية", uk: "лялька", tr: "oyuncak bebek", ru: "кукла" },
+    auto: { en: "car", ar: "سيارة", uk: "машина", tr: "araba", ru: "машина" },
+    sonne: { en: "sun", ar: "شمس", uk: "сонце", tr: "güneş", ru: "солнце" },
+    mond: { en: "moon", ar: "قمر", uk: "місяць", tr: "ay", ru: "луна" },
+    baum: { en: "tree", ar: "шجرة", uk: "дерево", tr: "ağaç", ru: "дерево" },
+    blume: { en: "flower", ar: "زهرة", uk: "квітка", tr: "çiçek", ru: "цветок" },
+    wolke: { en: "cloud", ar: "سحابة", uk: "хмара", tr: "bulut", ru: "облако" }
+};
+
+function getWordTranslation(item, lang = state.language || 'de') {
+    const isCustom = state.customVocabulary.some(cv => cv.id === item.id);
+    if (isCustom) {
+        return item.translation;
+    }
+    const id = item.id;
+    const defaultTranslations = VOCAB_TRANSLATIONS[id];
+    if (defaultTranslations && defaultTranslations[lang]) {
+        return defaultTranslations[lang];
+    }
+    return item.translation; // Fallback
 }
