@@ -1803,6 +1803,7 @@ const TRANSLATIONS = {
             'Natur': 'Природа'
         }
     }
+};
 
 function populateCategoryDropdown() {
     const catSelect = document.getElementById('vocab-category');
