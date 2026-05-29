@@ -92,10 +92,12 @@ function registerServiceWorker() {
             
             // Periodically check for updates on the server
             setInterval(() => {
-                reg.update().catch(err => {
-                    logDebug(`ServiceWorker update check failed (possibly invalid state): ${err.message}`, 'warning');
-                });
-            }, 60 * 1000); // Check every minute
+                if (reg.active && reg.active.state !== 'redundant') {
+                    reg.update().catch(err => {
+                        logDebug(`ServiceWorker update check failed: ${err.message}`, 'debug');
+                    });
+                }
+            }, 5 * 60 * 1000); // Check every 5 minutes
             
             // Listen for new service workers installing
             reg.addEventListener('updatefound', () => {
@@ -533,7 +535,12 @@ function renderCategories() {
         'Essen': '🍎',
         'Farben': '🔴',
         'Schule': '🎒',
-        'Kleidung': '🧥'
+        'Kleidung': '🧥',
+        'Körper': '💪',
+        'Familie': '👪',
+        'Haus': '🏠',
+        'Spielzeug': '🧸',
+        'Natur': '🌲'
     };
     
     const categoryColors = {
@@ -541,17 +548,15 @@ function renderCategories() {
         'Essen': '#FF5B7F',
         'Farben': '#3A86FF',
         'Schule': '#2EC4B6',
-        'Kleidung': '#8338EC'
+        'Kleidung': '#8338EC',
+        'Körper': '#4A90E2',
+        'Familie': '#E63946',
+        'Haus': '#457B9D',
+        'Spielzeug': '#A8DADC',
+        'Natur': '#1D3557'
     };
 
-    // English localized headers for children in the UI
-    const categoryNamesEn = {
-        'Tiere': 'Animals (Tiere)',
-        'Essen': 'Food (Essen)',
-        'Farben': 'Colors (Farben)',
-        'Schule': 'School (Schule)',
-        'Kleidung': 'Clothes (Kleidung)'
-    };
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
 
     categories.forEach(cat => {
         const count = state.vocabulary.filter(v => v.category === cat).length;
@@ -560,12 +565,13 @@ function renderCategories() {
         card.style.setProperty('--card-accent', categoryColors[cat] || '#5271FF');
         
         const emoji = categoryIcons[cat] || '⭐';
-        const displayName = categoryNamesEn[cat] || cat;
+        const transCat = (t.categories && t.categories[cat]) ? t.categories[cat] : cat;
+        const displayName = transCat === cat ? cat : `${transCat} (${cat})`;
         
         card.innerHTML = `
             <span class="category-emoji">${emoji}</span>
             <h3>${displayName}</h3>
-            <span>${count} Words</span>
+            <span>${count} ${t.wordsCount || 'Words'}</span>
         `;
         
         card.addEventListener('click', () => showGameModal(cat));
@@ -576,15 +582,11 @@ function renderCategories() {
 function showGameModal(category) {
     state.activeCategory = category;
     
-    const categoryNamesEn = {
-        'Tiere': 'Animals (Tiere)',
-        'Essen': 'Food (Essen)',
-        'Farben': 'Colors (Farben)',
-        'Schule': 'School (Schule)',
-        'Kleidung': 'Clothes (Kleidung)'
-    };
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    const transCat = (t.categories && t.categories[category]) ? t.categories[category] : category;
+    const displayName = transCat === category ? category : `${transCat} (${category})`;
     
-    document.getElementById('modal-category-title').textContent = categoryNamesEn[category] || category;
+    document.getElementById('modal-category-title').textContent = displayName;
     document.getElementById('game-mode-modal').classList.remove('hidden');
     
     document.getElementById('start-game-match').onclick = () => startGame('match');
@@ -604,20 +606,21 @@ function startGame(gameType) {
     document.getElementById('game-score').textContent = '0';
     
     const catWords = state.vocabulary.filter(w => w.category === state.activeCategory);
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
     
     if (catWords.length < 3 && gameType !== 'memory') {
-        alert('Not enough vocabulary in this category! Please add more cards first.');
+        alert(t.alertMinWords || 'Not enough vocabulary in this category! Please add more cards first.');
         return;
     }
     if (catWords.length < 4 && gameType === 'memory') {
-        alert('Memory match game requires at least 4 vocabulary cards in this category!');
+        alert(t.alertMinMemory || 'Memory match game requires at least 4 vocabulary cards in this category!');
         return;
     }
     
     const gameConfigs = {
-        'match': { title: 'Word-Image Quiz', icon: '🖼️' },
-        'spelling': { title: 'Spelling Game', icon: '🔤' },
-        'memory': { title: 'Memory Match', icon: '🎴' }
+        'match': { title: t.gameMatchTitle || 'Word-Image Quiz', icon: '🖼️' },
+        'spelling': { title: t.gameSpellingTitle || 'Spelling Game', icon: '🔤' },
+        'memory': { title: t.gameMemoryTitle || 'Memory Match', icon: '🎴' }
     };
     document.getElementById('game-active-icon').textContent = gameConfigs[gameType].icon;
     document.getElementById('game-active-name').textContent = gameConfigs[gameType].title;
@@ -1014,7 +1017,9 @@ function renderCreatorTable() {
 }
 
 window.deleteCustomVocab = function(id) {
-    if (confirm('Do you want to delete this vocabulary card?')) {
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    const confirmMsg = t.confirmDelete || 'Do you want to delete this vocabulary card?';
+    if (confirm(confirmMsg)) {
         state.customVocabulary = state.customVocabulary.filter(v => v.id !== id);
         localStorage.setItem('custom_vocab', JSON.stringify(state.customVocabulary));
         
@@ -1224,26 +1229,7 @@ function startConfetti() {
         });
     }
     
-    function animate() {
-        if (!confettiActive) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        let alive = false;
-        confettiParticles.forEach(p => {
-            p.y += p.speedY;
-            p.x += p.speedX;
-            p.rotation += p.rotationSpeed;
-            
-            if (p.y < canvas.height) {
-                alive = true;
-            }
-            
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rotation * Math.PI / 180);
-            ctx.fillStyle = p.color;
-            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-            ctx.restore();
+    function anim            ctx.restore();
         });
         
         if (alive) {
@@ -1253,10 +1239,10 @@ function startConfetti() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
+    
     animate();
 }
 
-// --- MULTILINGUAL LOCALIZATION (TRANSLATIONS) ---
 const TRANSLATIONS = {
     de: {
         welcomeTitle: "Hallo! Was möchtest du heute lernen? 🌟",
@@ -1275,7 +1261,78 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 Nach Updates suchen",
         copyLogsBtn: "📋 Logs kopieren",
         clearLogsBtn: "🧹 Logs löschen",
-        systemInfoTitle: "ℹ️ Systeminformationen"
+        systemInfoTitle: "ℹ️ Systeminformationen",
+        wordsCount: "Wörter",
+        labelArticle: "Artikel",
+        labelWord: "Deutsches Wort / Substantiv",
+        labelTranslation: "Übersetzung",
+        labelEmoji: "Emoji (Visueller Hinweis)",
+        labelCategory: "Kategorie",
+        labelDifficulty: "Schwierigkeit",
+        buttonAddCard: "Karte hinzufügen ➕",
+        placeholderWord: "z.B. Tisch, Hund, Rot",
+        placeholderTranslation: "z.B. table, dog, red",
+        placeholderEmoji: "z.B. 🪑, 🐕, 🔴",
+        optDer: "der (maskulin - blau 🔵)",
+        optDie: "die (feminin - rot 🔴)",
+        optDas: "das (neutral - grün 🟢)",
+        optNone: "kein Artikel (z.B. Farben 🟣)",
+        optEasy: "Einfach ⭐",
+        optMedium: "Mittel ⭐⭐",
+        optHard: "Schwer ⭐⭐⭐",
+        titlePreview: "Aktueller Wortschatz",
+        descPreview: "Sie können diese Liste als 'vocabulary.json'-Datei exportieren, um die statische Datei im Open-Source-Repository zu ersetzen.",
+        thImage: "Bild",
+        thWord: "Deutsches Wort",
+        thTranslation: "Übersetzung",
+        thCategory: "Kategorie",
+        thAction: "Aktion",
+        exportJsonBtn: "📥 Vokabelliste exportieren (JSON)",
+        confirmDelete: "Möchtest du diese Vokabelkarte wirklich löschen?",
+        alertMinWords: "Nicht genügend Vokabeln in dieser Kategorie! Bitte füge zuerst mehr Karten hinzu.",
+        alertMinMemory: "Das Memory-Spiel erfordert mindestens 4 Vokabelkarten in dieser Kategorie!",
+        backBtn: "Zurück",
+        clearBtn: "Löschen",
+        checkBtn: "Überprüfen",
+        matchQuestionPrompt: "Was ist dieses Bild auf Deutsch?",
+        spellingQuestionPrompt: "Buchstabiere das Wort:",
+        memoryQuestionPrompt: "Finde alle Paare! Klicke auf die Karten.",
+        gameOverTitle: "Großartig gemacht!",
+        gameOverDesc: "Du hast alle Aufgaben gelöst!",
+        continueBtn: "Weiter",
+        gameMatchTitle: "Wort-Bild-Quiz",
+        gameMatchDesc: "Finde das richtige deutsche Wort für das Bild!",
+        gameSpellingTitle: "Buchstabierspiel",
+        gameSpellingDesc: "Bringe die Buchstaben in die richtige Reihenfolge!",
+        gameMemoryTitle: "Memory-Spiel",
+        gameMemoryDesc: "Finde die passenden Wort- und Emoji-Paare!",
+        settingsStorageTitle: "💾 Fortschritt & Speicherung",
+        settingsStorageDesc: "Ihr Spielfortschritt (Level, XP) wird lokal auf diesem Gerät gespeichert und bleibt auch bei Anwendungsupdates erhalten.",
+        settingsThemeTitle: "🎨 Design & Thema",
+        settingsThemeDesc: "Ändern Sie das Erscheinungsbild der Anwendung. Wählen Sie zwischen hellem und dunklem Modus.",
+        settingsUpdatesTitle: "🔄 Test GitHub Updates",
+        settingsUpdatesDesc: "Prüfen Sie manuell, ob eine neuere Version der Anwendung im GitHub-Repository verfügbar ist.",
+        settingsDebugTitle: "🐞 Debug- und Fehlerprotokolle",
+        settingsDebugDesc: "Falls Probleme auftreten, können Sie das Debug-Protokoll kopieren, um diese auf GitHub zu melden.",
+        settingsSysInfoTitle: "ℹ️ Systeminformationen",
+        labelOnlineStatus: "Online-Status:",
+        labelAppVersion: "App-Version:",
+        labelCoreEngine: "Kern-Engine:",
+        labelLicense: "Lizenz:",
+        badgeOnline: "Online",
+        footerText: "Mit ❤️ und ⚡ Zig WebAssembly für Kinder, die Deutsch lernen, entwickelt. Open Source auf GitHub.",
+        categories: {
+            'Tiere': 'Tiere',
+            'Essen': 'Essen',
+            'Farben': 'Farben',
+            'Schule': 'Schule',
+            'Kleidung': 'Kleidung',
+            'Körper': 'Körper',
+            'Familie': 'Familie',
+            'Haus': 'Haus',
+            'Spielzeug': 'Spielzeug',
+            'Natur': 'Natur'
+        }
     },
     en: {
         welcomeTitle: "Hello! What do you want to learn today? 🌟",
@@ -1294,7 +1351,78 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 Check for Updates",
         copyLogsBtn: "📋 Copy Logs",
         clearLogsBtn: "🧹 Clear Logs",
-        systemInfoTitle: "ℹ️ System Information"
+        systemInfoTitle: "ℹ️ System Information",
+        wordsCount: "Words",
+        labelArticle: "Article",
+        labelWord: "German Noun / Word",
+        labelTranslation: "Translation",
+        labelEmoji: "Emoji (Visual Clue)",
+        labelCategory: "Category",
+        labelDifficulty: "Difficulty",
+        buttonAddCard: "Add Card ➕",
+        placeholderWord: "e.g., Tisch, Hund, Rot",
+        placeholderTranslation: "e.g., table, dog, red",
+        placeholderEmoji: "e.g., 🪑, 🐕, 🔴",
+        optDer: "der (masculine - blue 🔵)",
+        optDie: "die (feminine - red 🔴)",
+        optDas: "das (neuter - green 🟢)",
+        optNone: "no article (e.g. colors 🟣)",
+        optEasy: "Easy ⭐",
+        optMedium: "Medium ⭐⭐",
+        optHard: "Hard ⭐⭐⭐",
+        titlePreview: "Current Vocabulary List",
+        descPreview: "You can export this list as a `vocabulary.json` file to replace the static file in the open-source repository.",
+        thImage: "Image",
+        thWord: "German Word",
+        thTranslation: "Translation",
+        thCategory: "Category",
+        thAction: "Action",
+        exportJsonBtn: "📥 Export Vocab List (JSON)",
+        confirmDelete: "Do you want to delete this vocabulary card?",
+        alertMinWords: "Not enough vocabulary in this category! Please add more cards first.",
+        alertMinMemory: "Memory match game requires at least 4 vocabulary cards in this category!",
+        backBtn: "Back",
+        clearBtn: "Clear",
+        checkBtn: "Check",
+        matchQuestionPrompt: "What is this picture in German?",
+        spellingQuestionPrompt: "Spell the word:",
+        memoryQuestionPrompt: "Find all pairs! Click on the cards.",
+        gameOverTitle: "Great Job!",
+        gameOverDesc: "You solved all the tasks!",
+        continueBtn: "Continue",
+        gameMatchTitle: "Word-Image Quiz",
+        gameMatchDesc: "Find the correct German word for the picture!",
+        gameSpellingTitle: "Spelling Game",
+        gameSpellingDesc: "Put the letters in the correct order!",
+        gameMemoryTitle: "Memory Match",
+        gameMemoryDesc: "Find the matching word and emoji pairs!",
+        settingsStorageTitle: "💾 Progress & Storage",
+        settingsStorageDesc: "Your game progress (level, XP) is stored locally on this device and remains safe during application updates.",
+        settingsThemeTitle: "🎨 Design & Theme",
+        settingsThemeDesc: "Change how the application looks. Choose between light and dark modes.",
+        settingsUpdatesTitle: "🔄 Test GitHub Updates",
+        settingsUpdatesDesc: "Manually check if a newer version of the application is available in the GitHub repository.",
+        settingsDebugTitle: "🐞 Debug & Error Logs",
+        settingsDebugDesc: "If you encounter issues, you can copy the debug log to report them on GitHub.",
+        settingsSysInfoTitle: "ℹ️ System Information",
+        labelOnlineStatus: "Online Status:",
+        labelAppVersion: "App Version:",
+        labelCoreEngine: "Core Engine:",
+        labelLicense: "License:",
+        badgeOnline: "Online",
+        footerText: "Made with ❤️ and ⚡ Zig WebAssembly for children learning German. Open Source on GitHub.",
+        categories: {
+            'Tiere': 'Animals',
+            'Essen': 'Food',
+            'Farben': 'Colors',
+            'Schule': 'School',
+            'Kleidung': 'Clothes',
+            'Körper': 'Body',
+            'Familie': 'Family',
+            'Haus': 'House',
+            'Spielzeug': 'Toys',
+            'Natur': 'Nature'
+        }
     },
     ar: {
         welcomeTitle: "مرحباً! ماذا تريد أن تتعلم اليوم؟ 🌟",
@@ -1313,7 +1441,78 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 التحقق من التحديثات",
         copyLogsBtn: "📋 نسخ السجلات",
         clearLogsBtn: "🧹 مسح السجلات",
-        systemInfoTitle: "ℹ️ معلومات النظام"
+        systemInfoTitle: "ℹ️ معلومات النظام",
+        wordsCount: "كلمات",
+        labelArticle: "أداة التعريف",
+        labelWord: "الكلمة الألمانية",
+        labelTranslation: "الترجمة",
+        labelEmoji: "إيموجي (تلميح بصري)",
+        labelCategory: "الفئة",
+        labelDifficulty: "الصعوبة",
+        buttonAddCard: "إضافة بطاقة ➕",
+        placeholderWord: "مثال: Tisch, Hund, Rot",
+        placeholderTranslation: "مثال: table, dog, red",
+        placeholderEmoji: "مثال: 🪑, 🐕, 🔴",
+        optDer: "der (مذكر - أزرق 🔵)",
+        optDie: "die (مؤنث - أحمر 🔴)",
+        optDas: "das (محايد - أخضر 🟢)",
+        optNone: "بدون أداة تعريف (مثل الألوان 🟣)",
+        optEasy: "سهل ⭐",
+        optMedium: "متوسط ⭐⭐",
+        optHard: "صعب ⭐⭐⭐",
+        titlePreview: "قائمة المفردات الحالية",
+        descPreview: "يمكنك تصدير هذه القائمة كملف 'vocabulary.json' لاستبدال الملف الثابت في المستودع المفتوح المصدر.",
+        thImage: "صورة",
+        thWord: "الكلمة الألمانية",
+        thTranslation: "الترجمة",
+        thCategory: "الفئة",
+        thAction: "إجراء",
+        exportJsonBtn: "📥 تصدير قائمة المفردات (JSON)",
+        confirmDelete: "هل تريد حذف بطاقة المفردات هذه؟",
+        alertMinWords: "لا توجد مفردات كافية في هذه الفئة! يرجى إضافة المزيد من البطاقات أولاً.",
+        alertMinMemory: "تتطلب لعبة مطابقة الذاكرة ما لا يقل عن 4 بطاقات مفردات في هذه الفئة!",
+        backBtn: "رجوع",
+        clearBtn: "مسح",
+        checkBtn: "تحقق",
+        matchQuestionPrompt: "ما هي هذه الصورة باللغة الألمانية؟",
+        spellingQuestionPrompt: "تهجى الكلمة:",
+        memoryQuestionPrompt: "ابحث عن كل الأزواج! اضغط على البطاقات.",
+        gameOverTitle: "عمل رائع!",
+        gameOverDesc: "لقد قمت بحل جميع المهام!",
+        continueBtn: "استمرار",
+        gameMatchTitle: "اختبار الكلمة والصورة",
+        gameMatchDesc: "جد الكلمة الألمانية الصحيحة للصورة!",
+        gameSpellingTitle: "لعبة التهجئة",
+        gameSpellingDesc: "ضع الحروف في الترتيب الصحيح!",
+        gameMemoryTitle: "لعبة الذاكرة",
+        gameMemoryDesc: "ابحث عن أزواج الكلمات والإيموجي المتطابقة!",
+        settingsStorageTitle: "💾 التقدم والحفظ",
+        settingsStorageDesc: "يتم حفظ تقدم اللعبة (المستوى والنقاط) محلياً على جهازك ويبقى آمناً عند التحديثات.",
+        settingsThemeTitle: "🎨 المظهر والتصميم",
+        settingsThemeDesc: "غيّر مظهر التطبيق. اختر بين الوضعين الفاتح والداكن.",
+        settingsUpdatesTitle: "🔄 اختبار تحديثات GitHub",
+        settingsUpdatesDesc: "تحقق يدوياً من توفر إصدار أحدث للتطبيق في مستودع GitHub.",
+        settingsDebugTitle: "🐞 سجلات التصحيح والأخطاء",
+        settingsDebugDesc: "إذا واجهت مشاكل، يمكنك نسخ سجل التصحيح للإبلاغ عنها على GitHub.",
+        settingsSysInfoTitle: "ℹ️ معلومات النظام",
+        labelOnlineStatus: "حالة الاتصال:",
+        labelAppVersion: "إصدار التطبيق:",
+        labelCoreEngine: "محرك التشغيل:",
+        labelLicense: "الترخيص:",
+        badgeOnline: "متصل",
+        footerText: "تم التطوير بكل ❤️ و ⚡ باستخدام Zig WebAssembly للأطفال الذين يتعلمون الألمانية. مفتوح المصدر على GitHub.",
+        categories: {
+            'Tiere': 'حيوانات',
+            'Essen': 'طعام',
+            'Farben': 'ألوان',
+            'Schule': 'مدرسة',
+            'Kleidung': 'ملابس',
+            'Körper': 'جسم',
+            'Familie': 'عائلة',
+            'Haus': 'منزل',
+            'Spielzeug': 'ألعاب',
+            'Natur': 'طبيعة'
+        }
     },
     uk: {
         welcomeTitle: "Привіт! Що ти хочеш вивчити сьогодні? 🌟",
@@ -1332,7 +1531,78 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 Перевірити оновлення",
         copyLogsBtn: "📋 Копіювати логи",
         clearLogsBtn: "🧹 Очистити логи",
-        systemInfoTitle: "ℹ️ Системна інформація"
+        systemInfoTitle: "ℹ️ Системна інформація",
+        wordsCount: "Слів",
+        labelArticle: "Артикль",
+        labelWord: "Німецьке слово",
+        labelTranslation: "Переклад",
+        labelEmoji: "Емодзі (візуальна підказка)",
+        labelCategory: "Категорія",
+        labelDifficulty: "Складність",
+        buttonAddCard: "Додати картку ➕",
+        placeholderWord: "наприклад, Tisch, Hund, Rot",
+        placeholderTranslation: "наприклад, table, dog, red",
+        placeholderEmoji: "наприклад, 🪑, 🐕, 🔴",
+        optDer: "der (чоловічий - синій 🔵)",
+        optDie: "die (жіночий - червоний 🔴)",
+        optDas: "das (середній - зелений 🟢)",
+        optNone: "без артикля (наприклад, кольори 🟣)",
+        optEasy: "Легко ⭐",
+        optMedium: "Середньо ⭐⭐",
+        optHard: "Важко ⭐⭐⭐",
+        titlePreview: "Поточний список слів",
+        descPreview: "Ви можете експортувати цей список як файл 'vocabulary.json', щоб замінити статичний файл у репозиторії.",
+        thImage: "Зображення",
+        thWord: "Німецьке слово",
+        thTranslation: "Переклад",
+        thCategory: "Категорія",
+        thAction: "Дія",
+        exportJsonBtn: "📥 Експортувати список слів (JSON)",
+        confirmDelete: "Ви дійсно хочете видалити цю картку зі словом?",
+        alertMinWords: "Недостатньо слів у цій категорії! Будь ласка, спочатку додайте більше карток.",
+        alertMinMemory: "Гра в карти пам'яті вимагає щонайменше 4 картки зі словами в цій категорії!",
+        backBtn: "Назад",
+        clearBtn: "Очистити",
+        checkBtn: "Перевірити",
+        matchQuestionPrompt: "Що це за малюнок німецькою?",
+        spellingQuestionPrompt: "Напиши слово:",
+        memoryQuestionPrompt: "Знайди всі пари! Тисни на картки.",
+        gameOverTitle: "Чудова робота!",
+        gameOverDesc: "Ти виконав всі завдання!",
+        continueBtn: "Продовжити",
+        gameMatchTitle: "Вікторина Слово-Зображення",
+        gameMatchDesc: "Знайди правильне німецьке слово для малюнка!",
+        gameSpellingTitle: "Гра в правопис",
+        gameSpellingDesc: "Розстав букви в правильному порядку!",
+        gameMemoryTitle: "Гра в карти пам'яті",
+        gameMemoryDesc: "Знайди відповідні пари слів та емодзі!",
+        settingsStorageTitle: "💾 Прогрес та Збереження",
+        settingsStorageDesc: "Ваш ігровий прогрес (рівень, XP) зберігається локально на цьому пристрої та залишається в безпеці під час оновлень програми.",
+        settingsThemeTitle: "🎨 Дизайн та Тема",
+        settingsThemeDesc: "Змініть зовнішній вигляд програми. Виберіть світлий або темний режим.",
+        settingsUpdatesTitle: "🔄 Перевірка оновлень з GitHub",
+        settingsUpdatesDesc: "Вручну перевірте, чи доступна новіша версія програми в репозиторії GitHub.",
+        settingsDebugTitle: "🐞 Логи налагодження та помилок",
+        settingsDebugDesc: "Якщо у вас виникли проблеми, ви можете скопіювати лог налагодження, щоб повідомити про них на GitHub.",
+        settingsSysInfoTitle: "ℹ️ Системна інформація",
+        labelOnlineStatus: "Статус мережі:",
+        labelAppVersion: "Версія додатка:",
+        labelCoreEngine: "Ядро додатка:",
+        labelLicense: "Ліцензія:",
+        badgeOnline: "В мережі",
+        footerText: "Створено з ❤️ та ⚡ за допомогою Zig WebAssembly для дітей, що вивчають німецьку мову. Відкритий код на GitHub.",
+        categories: {
+            'Tiere': 'Тварини',
+            'Essen': 'Їжа',
+            'Farben': 'Кольори',
+            'Schule': 'Школа',
+            'Kleidung': 'Одяг',
+            'Körper': 'Тіло',
+            'Familie': 'Родина',
+            'Haus': 'Будинок',
+            'Spielzeug': 'Іграшки',
+            'Natur': 'Природа'
+        }
     },
     tr: {
         welcomeTitle: "Merhaba! Bugün ne öğrenmek istersin? 🌟",
@@ -1351,7 +1621,78 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 Güncellemeleri Denetle",
         copyLogsBtn: "📋 Günlükleri Kopyala",
         clearLogsBtn: "🧹 Günlükleri Temizle",
-        systemInfoTitle: "ℹ️ Sistem Bilgisi"
+        systemInfoTitle: "ℹ️ Sistem Bilgisi",
+        wordsCount: "Kelime",
+        labelArticle: "Tanımlık (Artikel)",
+        labelWord: "Almanca Kelime",
+        labelTranslation: "Çeviri",
+        labelEmoji: "Emoji (Görsel İpucu)",
+        labelCategory: "Kategori",
+        labelDifficulty: "Zorluk",
+        buttonAddCard: "Kart Ekle ➕",
+        placeholderWord: "örn. Tisch, Hund, Rot",
+        placeholderTranslation: "örn. table, dog, red",
+        placeholderEmoji: "örn. 🪑, 🐕, 🔴",
+        optDer: "der (eril - mavi 🔵)",
+        optDie: "die (dişil - kırmızı 🔴)",
+        optDas: "das (tarsız - yeşil 🟢)",
+        optNone: "tanımlık yok (örn. renkler 🟣)",
+        optEasy: "Kolay ⭐",
+        optMedium: "Orta ⭐⭐",
+        optHard: "Zor ⭐⭐⭐",
+        titlePreview: "Mevcut Kelime Listesi",
+        descPreview: "Açık kaynaklı depodaki statik dosyanın yerine bu listeyi bir 'vocabulary.json' dosyası olarak dışa aktarabilirsiniz.",
+        thImage: "Resim",
+        thWord: "Almanca Kelime",
+        thTranslation: "Çeviri",
+        thCategory: "Kategori",
+        thAction: "İşlem",
+        exportJsonBtn: "📥 Kelime Listesini Dışarı Aktar (JSON)",
+        confirmDelete: "Bu kelime kartını silmek istiyor musunuz?",
+        alertMinWords: "Bu kategoride yeterli kelime yok! Lütfen önce daha fazla kart ekleyin.",
+        alertMinMemory: "Hafıza eşleştirme oyunu bu kategoride en az 4 kelime kartı gerektirir!",
+        backBtn: "Geri",
+        clearBtn: "Temizle",
+        checkBtn: "Kontrol Et",
+        matchQuestionPrompt: "Bu resmin Almancası nedir?",
+        spellingQuestionPrompt: "Kelimeyi hecele:",
+        memoryQuestionPrompt: "Tüm eşleri bul! Kartların üzerine tıkla.",
+        gameOverTitle: "Harika İş!",
+        gameOverDesc: "Tüm görevleri çözdün!",
+        continueBtn: "Devam Et",
+        gameMatchTitle: "Kelime-Resim Testi",
+        gameMatchDesc: "Resim için doğru Almanca kelimeyi bul!",
+        gameSpellingTitle: "Heceleme Oyunu",
+        gameSpellingDesc: "Harfleri doğru sıraya koy!",
+        gameMemoryTitle: "Hafıza Eşleştirme",
+        gameMemoryDesc: "Eşleşen kelime ve emoji çiftlerini bul!",
+        settingsStorageTitle: "💾 İlerleme ve Depolama",
+        settingsStorageDesc: "Oyun ilerlemeniz (seviye, XP) bu cihazda yerel olarak saklanır ve uygulama güncellemeleri sırasında güvende kalır.",
+        settingsThemeTitle: "🎨 Tasarım ve Tema",
+        settingsThemeDesc: "Uygulamanın görünümünü değiştirin. Açık veya karanlık modu seçin.",
+        settingsUpdatesTitle: "🔄 GitHub Güncellemelerini Test Et",
+        settingsUpdatesDesc: "GitHub deposunda uygulamanın daha yeni bir sürümünün mevcut olup olmadığını manuel olarak kontrol edin.",
+        settingsDebugTitle: "🐞 Hata Ayıklama Günlükleri",
+        settingsDebugDesc: "Sorunlarla karşılaşırsanız, bunları GitHub'da bildirmek için hata ayıklama günlüğünü kopyalayabilirsiniz.",
+        settingsSysInfoTitle: "ℹ️ Sistem Bilgisi",
+        labelOnlineStatus: "Çevrimiçi Durumu:",
+        labelAppVersion: "Uygulama Sürümü:",
+        labelCoreEngine: "Çekirdek Motoru:",
+        labelLicense: "Lisans:",
+        badgeOnline: "Çevrimiçi",
+        footerText: "Almanca öğrenen çocuklar için ❤️ ve ⚡ Zig WebAssembly ile geliştirilmiştir. GitHub'da Açık Kaynak.",
+        categories: {
+            'Tiere': 'Hayvanlar',
+            'Essen': 'Yiyecek',
+            'Farben': 'Renkler',
+            'Schule': 'Okul',
+            'Kleidung': 'Kıyafetler',
+            'Körper': 'Vücut',
+            'Familie': 'Aile',
+            'Haus': 'Ev',
+            'Spielzeug': 'Oyuncaklar',
+            'Natur': 'Doğa'
+        }
     },
     ru: {
         welcomeTitle: "Привет! Что ты хочешь выучить сегодня? 🌟",
@@ -1370,13 +1711,105 @@ const TRANSLATIONS = {
         checkUpdatesBtn: "🔍 Проверить обновления",
         copyLogsBtn: "📋 Копировать логи",
         clearLogsBtn: "🧹 Очистить логи",
-        systemInfoTitle: "ℹ️ Системная информация"
+        systemInfoTitle: "ℹ️ Системная информация",
+        wordsCount: "Слов",
+        labelArticle: "Артикль",
+        labelWord: "Немецкое слово",
+        labelTranslation: "Перевод",
+        labelEmoji: "Эмодзи (визуальная подсказка)",
+        labelCategory: "Категория",
+        labelDifficulty: "Сложность",
+        buttonAddCard: "Добавить карту ➕",
+        placeholderWord: "напр. Tisch, Hund, Rot",
+        placeholderTranslation: "напр. table, dog, red",
+        placeholderEmoji: "напр. 🪑, 🐕, 🔴",
+        optDer: "der (мужской - синий 🔵)",
+        optDie: "die (женский - красный 🔴)",
+        optDas: "das (средний - зеленый 🟢)",
+        optNone: "без артикля (напр. цвета 🟣)",
+        optEasy: "Легко ⭐",
+        optMedium: "Средне ⭐⭐",
+        optHard: "Сложно ⭐⭐⭐",
+        titlePreview: "Текущий список слов",
+        descPreview: "Вы можете экспортировать этот список как файл 'vocabulary.json', чтобы заменить статический файл в репозитории.",
+        thImage: "Изображение",
+        thWord: "Немецкое слово",
+        thTranslation: "Перевод",
+        thCategory: "Категория",
+        thAction: "Действие",
+        exportJsonBtn: "📥 Экспортировать список слов (JSON)",
+        confirmDelete: "Вы действительно хотите удалить эту карточку со словом?",
+        alertMinWords: "Недостаточно слов в этой категории! Пожалуйста, сначала добавьте больше карточек.",
+        alertMinMemory: "Игра в карты памяти требует как минимум 4 карточки со словами в этой категории!",
+        backBtn: "Назад",
+        clearBtn: "Очистить",
+        checkBtn: "Проверить",
+        matchQuestionPrompt: "Что это за картинка по-немецки?",
+        spellingQuestionPrompt: "Напиши слово:",
+        memoryQuestionPrompt: "Найди все пары! Нажимай на карточки.",
+        gameOverTitle: "Отличная работа!",
+        gameOverDesc: "Ты решил все задачи!",
+        continueBtn: "Продолжить",
+        gameMatchTitle: "Викторина Слово-Картинка",
+        gameMatchDesc: "Найди правильное немецкое слово для картинки!",
+        gameSpellingTitle: "Игра в правописание",
+        gameSpellingDesc: "Расположи буквы в правильном порядке!",
+        gameMemoryTitle: "Игра на память",
+        gameMemoryDesc: "Найди подходящие пары слов и эмодзи!",
+        settingsStorageTitle: "💾 Прогресс и Сохранение",
+        settingsStorageDesc: "Ваш игровой прогрес (уровень, XP) сохраняется локально на этом устройстве и остается в безопасности во время обновлений.",
+        settingsThemeTitle: "🎨 Дизайн и Тема",
+        settingsThemeDesc: "Измените внешний вид приложения. Выберите светлый или темный режим.",
+        settingsUpdatesTitle: "🔄 Проверить обновления с GitHub",
+        settingsUpdatesDesc: "Вручную проверьте, доступна ли новая версия приложения в репозитории GitHub.",
+        settingsDebugTitle: "🐞 Логи отладки и ошибок",
+        settingsDebugDesc: "Если вы столкнулись с проблемами, вы можете скопировать лог отладки, чтобы сообщить о них на GitHub.",
+        settingsSysInfoTitle: "ℹ️ Системная информация",
+        labelOnlineStatus: "Статус сети:",
+        labelAppVersion: "Версия приложения:",
+        labelCoreEngine: "Ядро приложения:",
+        labelLicense: "Лицензия:",
+        badgeOnline: "В сети",
+        footerText: "Создано с ❤️ и ⚡ с помощью Zig WebAssembly для детей, изучающих немецкий язык. Открытый код на GitHub.",
+        categories: {
+            'Tiere': 'Животные',
+            'Essen': 'Еда',
+            'Farben': 'Цвета',
+            'Schule': 'Школа',
+            'Kleidung': 'Одежда',
+            'Körper': 'Тело',
+            'Familie': 'Семья',
+            'Haus': 'Дом',
+            'Spielzeug': 'Игрушки',
+            'Natur': 'Природа'
+        }
     }
-};
+
+function populateCategoryDropdown() {
+    const catSelect = document.getElementById('vocab-category');
+    if (!catSelect) return;
+    const currentVal = catSelect.value;
+    catSelect.innerHTML = '';
+    const categories = ['Tiere', 'Essen', 'Farben', 'Schule', 'Kleidung', 'Körper', 'Familie', 'Haus', 'Spielzeug', 'Natur'];
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        const translatedName = (t.categories && t.categories[cat]) ? t.categories[cat] : cat;
+        option.textContent = translatedName === cat ? cat : `${translatedName} (${cat})`;
+        catSelect.appendChild(option);
+    });
+    if (currentVal) {
+        catSelect.value = currentVal;
+    }
+}
 
 function applyLanguage(lang) {
     state.language = lang;
     localStorage.setItem('user_language', lang);
+    
+    document.documentElement.lang = lang;
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
     
@@ -1404,7 +1837,90 @@ function applyLanguage(lang) {
         'reset-progress-btn': t.resetProgressBtn,
         'trigger-update-check-btn': t.checkUpdatesBtn,
         'copy-debug-logs-btn': p => p ? p.textContent = t.copyLogsBtn : null,
-        'clear-debug-logs-btn': p => p ? p.textContent = t.clearLogsBtn : null
+        'clear-debug-logs-btn': p => p ? p.textContent = t.clearLogsBtn : null,
+        
+        // Progress bar level badge
+        'level-badge-label': t.levelBadgeLabel || 'Level',
+        
+        // Form Labels in Content Creator
+        'label-vocab-article': t.labelArticle,
+        'label-vocab-word': t.labelWord,
+        'label-vocab-translation': t.labelTranslation,
+        'label-vocab-emoji': t.labelEmoji,
+        'label-vocab-category': t.labelCategory,
+        'label-vocab-difficulty': t.labelDifficulty,
+        
+        // Article dropdown options
+        'opt-art-der': t.optDer,
+        'opt-art-die': t.optDie,
+        'opt-art-das': t.optDas,
+        'opt-art-none': t.optNone,
+        
+        // Difficulty dropdown options
+        'opt-diff-easy': t.optEasy,
+        'opt-diff-medium': t.optMedium,
+        'opt-diff-hard': t.optHard,
+        
+        // Input placeholders
+        'vocab-word': p => p ? p.placeholder = t.placeholderWord : null,
+        'vocab-translation': p => p ? p.placeholder = t.placeholderTranslation : null,
+        'vocab-emoji': p => p ? p.placeholder = t.placeholderEmoji : null,
+        
+        // Add vocabulary button
+        'vocab-submit-btn': t.buttonAddCard,
+        
+        // Table Headers / Preview text
+        'title-preview-header': p => p ? p.innerHTML = `${t.titlePreview} (<span id="vocab-count">${state.vocabulary.length}</span> ${t.wordsCount})` : null,
+        'desc-preview-p': t.descPreview,
+        'th-image': t.thImage,
+        'th-word': t.thWord,
+        'th-translation': t.thTranslation,
+        'th-category': t.thCategory,
+        'th-action': t.thAction,
+        
+        // Export button
+        'export-json-btn': t.exportJsonBtn,
+        
+        // Game mode modal selections
+        'modal-game-subtitle': t.chooseGame,
+        'game-match-title': t.gameMatchTitle,
+        'game-match-desc': t.gameMatchDesc,
+        'game-spelling-title': t.gameSpellingTitle,
+        'game-spelling-desc': t.gameSpellingDesc,
+        'game-memory-title': t.gameMemoryTitle,
+        'game-memory-desc': t.gameMemoryDesc,
+        
+        // Game Views elements
+        'game-back-btn': p => p ? p.innerHTML = `⬅️ ${t.backBtn || 'Back'}` : null,
+        'match-question-prompt': t.matchQuestionPrompt,
+        'spelling-question-prompt': t.spellingQuestionPrompt,
+        'spelling-clear-btn': p => p ? p.innerHTML = `❌ ${t.clearBtn || 'Clear'}` : null,
+        'spelling-submit-btn': p => p ? p.innerHTML = `✔️ ${t.checkBtn || 'Check'}` : null,
+        'memory-question-prompt': t.memoryQuestionPrompt,
+        
+        // Game over screen overlay
+        'game-over-title': t.gameOverTitle,
+        'game-over-desc': t.gameOverDesc,
+        'game-finish-btn': t.continueBtn,
+        
+        // Settings Card Texts
+        'settings-storage-title': t.settingsStorageTitle,
+        'settings-storage-desc': t.settingsStorageDesc,
+        'settings-theme-title': t.settingsThemeTitle,
+        'settings-theme-desc': t.settingsThemeDesc,
+        'settings-theme-toggle-btn': t.themeToggleBtn,
+        'settings-updates-title': t.settingsUpdatesTitle,
+        'settings-updates-desc': t.settingsUpdatesDesc,
+        'settings-debug-title': t.settingsDebugTitle,
+        'settings-debug-desc': t.settingsDebugDesc,
+        'settings-sysinfo-title': t.settingsSysInfoTitle,
+        'label-online-status': t.labelOnlineStatus,
+        'label-app-version': t.labelAppVersion,
+        'label-core-engine': t.labelCoreEngine,
+        'label-license': t.labelLicense,
+        
+        // Footer text
+        'app-footer-text': t.footerText
     };
     
     Object.keys(elMap).forEach(id => {
@@ -1418,11 +1934,13 @@ function applyLanguage(lang) {
         }
     });
     
+    populateCategoryDropdown();
+    renderCategories();
+    
     if (document.getElementById('screen-stickers').classList.contains('active')) {
         renderStickerAlbum();
     }
     
-    // Refresh Creator Table to update vocabulary translations
     renderCreatorTable();
 }
 

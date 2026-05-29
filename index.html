@@ -49,7 +49,7 @@
             <!-- User Progress Indicator -->
             <div class="header-progress">
                 <div class="level-badge">
-                    <span>Level</span>
+                    <span id="level-badge-label">Level</span>
                     <strong id="user-level">1</strong>
                 </div>
                 <div class="xp-bar-container">
@@ -87,15 +87,15 @@
                     <div class="modal-content glass">
                         <button class="modal-close" id="close-game-modal">&times;</button>
                         <h3 id="modal-category-title">Choose Topic</h3>
-                        <p class="modal-subtitle">Select your favorite game:</p>
+                        <p class="modal-subtitle" id="modal-game-subtitle">Select your favorite game:</p>
                         
                         <div class="games-selection">
                             <!-- Game 1 -->
                             <button class="game-card" id="start-game-match">
                                 <span class="game-icon">🖼️</span>
                                 <div class="game-details">
-                                    <h4>Word-Image Quiz</h4>
-                                    <p>Find the correct German word for the picture!</p>
+                                    <h4 id="game-match-title">Word-Image Quiz</h4>
+                                    <p id="game-match-desc">Find the correct German word for the picture!</p>
                                 </div>
                             </button>
                             
@@ -103,8 +103,8 @@
                             <button class="game-card" id="start-game-spelling">
                                 <span class="game-icon">🔤</span>
                                 <div class="game-details">
-                                    <h4>Spelling Game</h4>
-                                    <p>Put the letters in the correct order!</p>
+                                    <h4 id="game-spelling-title">Spelling Game</h4>
+                                    <p id="game-spelling-desc">Put the letters in the correct order!</p>
                                 </div>
                             </button>
                             
@@ -112,8 +112,8 @@
                             <button class="game-card" id="start-game-memory">
                                 <span class="game-icon">🎴</span>
                                 <div class="game-details">
-                                    <h4>Memory Match</h4>
-                                    <p>Find the matching word and emoji pairs!</p>
+                                    <h4 id="game-memory-title">Memory Match</h4>
+                                    <p id="game-memory-desc">Find the matching word and emoji pairs!</p>
                                 </div>
                             </button>
                         </div>
@@ -146,7 +146,7 @@
                     <!-- Game 1: Match View -->
                     <div id="game-view-match" class="game-view hidden">
                         <div class="question-emoji" id="match-question-emoji">🐱</div>
-                        <p class="question-text">What is this picture in German? <button class="btn-help" id="match-help-btn" title="Help">💡</button></p>
+                        <p class="question-text"><span id="match-question-prompt">What is this picture in German?</span> <button class="btn-help" id="match-help-btn" title="Help">💡</button></p>
                         <div class="help-text-bubble hidden" id="match-help-text"></div>
                         <div class="options-grid" id="match-options-container">
                             <!-- 4 choice buttons will be injected here -->
@@ -156,7 +156,7 @@
                     <!-- Game 2: Spelling View -->
                     <div id="game-view-spelling" class="game-view hidden">
                         <div class="question-emoji" id="spelling-question-emoji">🍎</div>
-                        <p class="question-text">Spell the word: <button class="btn-help" id="spelling-help-btn" title="Help">💡</button></p>
+                        <p class="question-text"><span id="spelling-question-prompt">Spell the word:</span> <button class="btn-help" id="spelling-help-btn" title="Help">💡</button></p>
                         <div class="help-text-bubble hidden" id="spelling-help-text"></div>
                         
                         <!-- Expected Word Length Indicator / Answer Blocks -->
@@ -173,7 +173,7 @@
                     
                     <!-- Game 3: Memory View -->
                     <div id="game-view-memory" class="game-view hidden">
-                        <p class="question-text">Find all pairs! Click on the cards.</p>
+                        <p class="question-text" id="memory-question-prompt">Find all pairs! Click on the cards.</p>
                         <div class="memory-grid" id="memory-grid-container">
                             <!-- 8 cards will be injected here -->
                         </div>
@@ -184,8 +184,8 @@
                 <div id="game-over-overlay" class="game-overlay hidden">
                     <div class="overlay-card glass text-center">
                         <span class="victory-emoji">🏆</span>
-                        <h2>Great Job!</h2>
-                        <p>You solved all the tasks!</p>
+                        <h2 id="game-over-title">Great Job!</h2>
+                        <p id="game-over-desc">You solved all the tasks!</p>
                         <div class="xp-gain-badge">+<span id="xp-gained">0</span> XP</div>
                         <button class="btn btn-primary btn-large" id="game-finish-btn">Continue</button>
                     </div>
@@ -203,71 +203,67 @@
                     <form id="vocab-form" class="creator-form">
                         <div class="form-group-row">
                             <div class="form-group">
-                                <label for="vocab-article">Article</label>
+                                <label for="vocab-article" id="label-vocab-article">Article</label>
                                 <select id="vocab-article">
-                                    <option value="der">der (masculine - blue 🔵)</option>
-                                    <option value="die">die (feminine - red 🔴)</option>
-                                    <option value="das">das (neuter - green 🟢)</option>
-                                    <option value="-">no article (e.g. colors 🟣)</option>
+                                    <option id="opt-art-der" value="der">der (masculine - blue 🔵)</option>
+                                    <option id="opt-art-die" value="die">die (feminine - red 🔴)</option>
+                                    <option id="opt-art-das" value="das">das (neuter - green 🟢)</option>
+                                    <option id="opt-art-none" value="-">no article (e.g. colors 🟣)</option>
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label for="vocab-word">German Noun / Word</label>
+                                <label for="vocab-word" id="label-vocab-word">German Noun / Word</label>
                                 <input type="text" id="vocab-word" placeholder="e.g., Tisch, Hund, Rot" required>
                             </div>
                         </div>
                         
                         <div class="form-group-row">
                             <div class="form-group">
-                                <label for="vocab-translation">Translation (e.g. English)</label>
+                                <label for="vocab-translation" id="label-vocab-translation">Translation</label>
                                 <input type="text" id="vocab-translation" placeholder="e.g., table, dog, red" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="vocab-emoji">Emoji (Visual Clue)</label>
+                                <label for="vocab-emoji" id="label-vocab-emoji">Emoji (Visual Clue)</label>
                                 <input type="text" id="vocab-emoji" placeholder="e.g., 🪑, 🐕, 🔴" maxLength="2" required>
                             </div>
                         </div>
                         
                         <div class="form-group-row">
                             <div class="form-group">
-                                <label for="vocab-category">Category</label>
+                                <label for="vocab-category" id="label-vocab-category">Category</label>
                                 <select id="vocab-category">
-                                    <option value="Tiere">Tiere (Animals) 🐶</option>
-                                    <option value="Essen">Essen (Food) 🍎</option>
-                                    <option value="Farben">Farben (Colors) 🔴</option>
-                                    <option value="Schule">Schule (School) 🎒</option>
-                                    <option value="Kleidung">Kleidung (Clothes) 🧥</option>
+                                    <!-- Populated dynamically via JS -->
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label for="vocab-difficulty">Difficulty</label>
+                                <label for="vocab-difficulty" id="label-vocab-difficulty">Difficulty</label>
                                 <select id="vocab-difficulty">
-                                    <option value="1">Easy ⭐</option>
-                                    <option value="2">Medium ⭐⭐</option>
-                                    <option value="3">Hard ⭐⭐⭐</option>
+                                    <option id="opt-diff-easy" value="1">Easy ⭐</option>
+                                    <option id="opt-diff-medium" value="2">Medium ⭐⭐</option>
+                                    <option id="opt-diff-hard" value="3">Hard ⭐⭐⭐</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary btn-large width-100">Add Card ➕</button>
+                        <button type="submit" id="vocab-submit-btn" class="btn btn-primary btn-large width-100">Add Card ➕</button>
                     </form>
                     
                     <div class="creator-preview">
-                        <h3>Current Vocabulary List (<span id="vocab-count">0</span> words)</h3>
-                        <p class="description">You can export this list as a `vocabulary.json` file to replace the static file in the open-source repository.</p>
+                        <h3 id="title-preview-header">Current Vocabulary List (<span id="vocab-count">0</span> words)</h3>
+                        <p class="description" id="desc-preview-p">You can export this list as a `vocabulary.json` file to replace the static file in the open-source repository.</p>
                         
                         <div class="vocab-table-wrapper">
                             <table class="vocab-table">
                                 <thead>
                                     <tr>
-                                        <th>Image</th>
-                                        <th>German Word</th>
-                                        <th>Translation</th>
-                                        <th>Category</th>
-                                        <th>Action</th>
+                                        <th id="th-image">Image</th>
+                                        <th id="th-word">German Word</th>
+                                        <th id="th-translation">Translation</th>
+                                        <th id="th-category">Category</th>
+                                        <th id="th-action">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="vocab-table-body" class="notranslate" translate="no">
@@ -307,8 +303,8 @@
                 <div class="settings-grid">
                     <!-- Storage Settings Card -->
                     <div class="settings-card glass">
-                        <h3>💾 Progress & Storage</h3>
-                        <p>Your game progress (level, XP) is stored locally on this device and remains safe during application updates.</p>
+                        <h3 id="settings-storage-title">💾 Progress & Storage</h3>
+                        <p id="settings-storage-desc">Your game progress (level, XP) is stored locally on this device and remains safe during application updates.</p>
                         <div class="settings-actions">
                             <button id="reset-progress-btn" class="btn btn-danger">🗑️ Reset Progress</button>
                         </div>
@@ -332,8 +328,8 @@
                     
                     <!-- Theme Settings Card -->
                     <div class="settings-card glass">
-                        <h3>🎨 Design & Theme</h3>
-                        <p>Change how the application looks. Choose between light and dark modes.</p>
+                        <h3 id="settings-theme-title">🎨 Design & Theme</h3>
+                        <p id="settings-theme-desc">Change how the application looks. Choose between light and dark modes.</p>
                         <div class="settings-actions">
                             <button id="settings-theme-toggle-btn" class="btn btn-secondary">🌓 Toggle Dark Mode</button>
                         </div>
@@ -341,19 +337,19 @@
                     
                     <!-- System Info Card -->
                     <div class="settings-card glass">
-                        <h3>ℹ️ System Information</h3>
+                        <h3 id="settings-sysinfo-title">ℹ️ System Information</h3>
                         <ul class="info-list">
-                            <li><strong>Online Status:</strong> <span id="online-status-badge" class="badge green">Online</span></li>
-                            <li><strong>App Version:</strong> <span id="app-version-badge" class="badge blue">v1.0.0</span></li>
-                            <li><strong>Core Engine:</strong> <span class="badge purple">Zig + WebAssembly</span></li>
-                            <li><strong>License:</strong> MIT (Open Source)</li>
+                            <li><strong id="label-online-status">Online Status:</strong> <span id="online-status-badge" class="badge green">Online</span></li>
+                            <li><strong id="label-app-version">App Version:</strong> <span id="app-version-badge" class="badge blue">v1.0.0</span></li>
+                            <li><strong id="label-core-engine">Core Engine:</strong> <span class="badge purple">Zig + WebAssembly</span></li>
+                            <li><strong id="label-license">License:</strong> MIT (Open Source)</li>
                         </ul>
                     </div>
                     
                     <!-- Developer Check for updates mock -->
                     <div class="settings-card glass">
-                        <h3>🔄 Test GitHub Updates</h3>
-                        <p>Manually check if a newer version of the application is available in the GitHub repository.</p>
+                        <h3 id="settings-updates-title">🔄 Test GitHub Updates</h3>
+                        <p id="settings-updates-desc">Manually check if a newer version of the application is available in the GitHub repository.</p>
                         <div class="settings-actions">
                             <button id="trigger-update-check-btn" class="btn btn-secondary">🔍 Check for Updates</button>
                         </div>
@@ -361,8 +357,8 @@
                     
                     <!-- Debug & Error Logs Card -->
                     <div class="settings-card glass" id="debug-logs-card">
-                        <h3>🐞 Debug & Error Logs</h3>
-                        <p>If you encounter issues, you can copy the debug log to report them on GitHub.</p>
+                        <h3 id="settings-debug-title">🐞 Debug & Error Logs</h3>
+                        <p id="settings-debug-desc">If you encounter issues, you can copy the debug log to report them on GitHub.</p>
                         <div class="debug-log-container">
                             <pre id="debug-log-output">No errors detected. System running normally.</pre>
                         </div>
@@ -378,7 +374,7 @@
         
         <!-- App Footer -->
         <footer class="app-footer">
-            <p>Made with ❤️ and ⚡ Zig WebAssembly for children learning German. Open Source on GitHub.</p>
+            <p id="app-footer-text">Made with ❤️ and ⚡ Zig WebAssembly for children learning German. Open Source on GitHub.</p>
         </footer>
     </div>
 
