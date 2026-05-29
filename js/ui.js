@@ -242,19 +242,35 @@ export function renderCategories() {
         'Natur': '🌳'
     };
     
+    const categoryColors = {
+        'Tiere': '#FF9F1C',
+        'Essen': '#FF5B7F',
+        'Farben': '#3A86FF',
+        'Schule': '#2EC4B6',
+        'Kleidung': '#8338EC',
+        'Körper': '#4A90E2',
+        'Familie': '#E63946',
+        'Haus': '#457B9D',
+        'Spielzeug': '#A8DADC',
+        'Natur': '#1D3557'
+    };
+    
     const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
     
     categories.forEach(cat => {
-        const card = document.createElement('div');
+        const count = state.vocabulary.filter(v => v.category === cat).length;
+        const card = document.createElement('button');
         card.className = 'category-card';
+        card.style.setProperty('--card-accent', categoryColors[cat] || '#5271FF');
         
-        const icon = categoryIcons[cat] || '❓';
+        const emoji = categoryIcons[cat] || '⭐';
         const transCat = (t.categories && t.categories[cat]) ? t.categories[cat] : cat;
         const displayName = transCat === cat ? cat : `${transCat} (${cat})`;
         
         card.innerHTML = `
-            <div class="category-icon">${icon}</div>
+            <span class="category-emoji">${emoji}</span>
             <h3>${displayName}</h3>
+            <span>${count} ${t.wordsCount || 'Words'}</span>
         `;
         
         card.addEventListener('click', () => {

@@ -221,7 +221,7 @@ export function loadMatchRound() {
     document.getElementById('match-question-emoji').textContent = card.emoji;
     
     // Load choices
-    const container = document.getElementById('match-choices-container');
+    const container = document.getElementById('match-options-container');
     container.innerHTML = '';
     
     const catWords = state.vocabulary.filter(w => w.category === state.activeCategory);
@@ -237,14 +237,16 @@ export function loadMatchRound() {
     
     shuffledChoices.forEach(choice => {
         const btn = document.createElement('button');
-        btn.className = 'match-choice-btn';
+        btn.className = 'option-btn notranslate';
+        btn.setAttribute('translate', 'no');
+        btn.dataset.choiceId = choice.id;
         
         let article = '';
         let noun = choice.word;
         if (choice.word.includes(' ')) {
             const parts = choice.word.split(' ');
             if (['der', 'die', 'das'].includes(parts[0].toLowerCase())) {
-                article = parts[0];
+                article = parts[0].toLowerCase();
                 noun = parts.slice(1).join(' ');
             }
         }
@@ -266,10 +268,10 @@ export function loadMatchRound() {
 export function verifyMatchAnswer(button, selectedChoice, correctCard) {
     const isCorrect = (selectedChoice.id === correctCard.id);
     
-    // Disable all options
-    document.querySelectorAll('.match-choice-btn').forEach(btn => {
+    // Disable all options and show feedback
+    document.querySelectorAll('#match-options-container .option-btn').forEach(btn => {
         btn.disabled = true;
-        if (btn.textContent.includes(correctCard.word.split(' ').pop())) {
+        if (btn.dataset.choiceId === correctCard.id.toString()) {
             btn.classList.add('correct');
         }
     });
@@ -279,11 +281,11 @@ export function verifyMatchAnswer(button, selectedChoice, correctCard) {
         playSuccessSound();
         const xpGained = getXPReward(correctCard);
         addXP(xpGained);
-        state.gameScore += 1;
+        state.gameScore += xpGained;
         document.getElementById('game-score').textContent = state.gameScore;
         updateMastery(correctCard.id, true);
     } else {
-        button.classList.add('incorrect');
+        button.classList.add('wrong');
         playErrorSound();
         updateMastery(correctCard.id, false);
     }
@@ -324,8 +326,9 @@ export function loadSpellingRound() {
     pool.innerHTML = '';
     shuffledLetters.forEach((l, idx) => {
         const key = `${l}-${idx}`;
-        const item = document.createElement('div');
-        item.className = 'letter-tile';
+        const item = document.createElement('button');
+        item.className = 'pool-letter notranslate';
+        item.setAttribute('translate', 'no');
         item.textContent = l.toUpperCase();
         item.dataset.key = key;
         
@@ -344,7 +347,7 @@ export function loadSpellingRound() {
     // Control buttons
     document.getElementById('spelling-clear-btn').onclick = () => {
         state.spellingTypedLetters = [];
-        document.querySelectorAll('#spelling-letters-pool .letter-tile').forEach(t => {
+        document.querySelectorAll('#spelling-letters-pool .pool-letter').forEach(t => {
             t.classList.remove('used');
         });
         updateSpellingSlots();
@@ -356,23 +359,34 @@ export function loadSpellingRound() {
         
         const container = document.getElementById('spelling-slots');
         if (correct) {
-            container.querySelectorAll('.letter-tile').forEach(t => t.classList.add('correct'));
+            container.querySelectorAll('.letter-slot').forEach(t => t.classList.add('correct'));
             playSuccessSound();
             const xpGained = getXPReward(card);
             addXP(xpGained);
-            state.gameScore += 1;
+            state.gameScore += xpGained;
             document.getElementById('game-score').textContent = state.gameScore;
             updateMastery(card.id, true);
+            
+            setTimeout(() => {
+                state.currentCardIndex += 1;
+                loadSpellingRound();
+            }, 1500);
         } else {
-            container.querySelectorAll('.letter-tile').forEach(t => t.classList.add('incorrect'));
+            container.querySelectorAll('.letter-slot').forEach(t => t.classList.add('wrong'));
             playErrorSound();
             updateMastery(card.id, false);
+            
+            const slots = document.getElementById('spelling-slots');
+            slots.style.animation = 'shake 0.4s ease';
+            setTimeout(() => {
+                slots.style.animation = '';
+                state.spellingTypedLetters = [];
+                document.querySelectorAll('#spelling-letters-pool .pool-letter').forEach(t => {
+                    t.classList.remove('used');
+                });
+                updateSpellingSlots();
+            }, 800);
         }
-        
-        setTimeout(() => {
-            state.currentCardIndex += 1;
-            loadSpellingRound();
-        }, 1500);
     };
 }
 
@@ -388,18 +402,19 @@ export function updateSpellingSlots() {
     
     for (let i = 0; i < length; i++) {
         const slot = document.createElement('div');
-        slot.className = 'letter-tile slot';
+        slot.className = 'letter-slot notranslate';
+        slot.setAttribute('translate', 'no');
         
         if (state.spellingTypedLetters[i]) {
             const data = state.spellingTypedLetters[i];
             slot.textContent = data.letter.toUpperCase();
-            slot.classList.remove('slot');
+            slot.classList.add('filled');
             
             slot.addEventListener('click', () => {
                 // Remove this letter from slots
                 const removed = state.spellingTypedLetters.splice(i, 1)[0];
                 // Find matching letter in pool
-                const poolItem = document.querySelector(`#spelling-letters-pool .letter-tile[data-key="${removed.key}"]`);
+                const poolItem = document.querySelector(`#spelling-letters-pool .pool-letter[data-key="${removed.key}"]`);
                 if (poolItem) poolItem.classList.remove('used');
                 updateSpellingSlots();
             });
@@ -426,58 +441,59 @@ export function loadMemoryGame() {
     const shuffledIndices = shuffleIndicesWithWasm(cards.length);
     const shuffledCards = shuffledIndices.map(idx => cards[idx]);
     
-    shuffledCards.forEach(card => {
-        const el = document.createElement('div');
-        el.className = 'memory-card closed';
-        
-        const inner = document.createElement('div');
-        inner.className = 'memory-card-inner';
+    shuffledCards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'memory-card';
+        cardEl.dataset.index = index;
+        cardEl.dataset.id = card.id;
         
         const front = document.createElement('div');
-        front.className = 'memory-card-front';
-        front.textContent = '❓';
-        
-        const back = document.createElement('div');
-        back.className = 'memory-card-back';
+        front.className = 'memory-card-front notranslate';
+        front.setAttribute('translate', 'no');
         
         if (card.type === 'word') {
+            front.classList.add('is-word');
             let article = '';
             let noun = card.content;
             if (card.content.includes(' ')) {
                 const parts = card.content.split(' ');
                 if (['der', 'die', 'das'].includes(parts[0].toLowerCase())) {
-                    article = parts[0];
+                    article = parts[0].toLowerCase();
                     noun = parts.slice(1).join(' ');
                 }
             }
             if (article) {
-                back.innerHTML = `<span class="word-${article}">${article}</span><br>${noun}`;
+                front.innerHTML = `<span class="word-${article}">${article}</span><br>${noun}`;
             } else {
-                back.textContent = noun;
+                front.textContent = noun;
             }
-            back.style.fontSize = '1.1rem';
         } else {
-            back.textContent = card.content;
-            back.style.fontSize = '3.5rem';
+            front.classList.add('is-emoji');
+            front.textContent = card.content;
         }
         
-        inner.appendChild(front);
-        inner.appendChild(back);
-        el.appendChild(inner);
+        const back = document.createElement('div');
+        back.className = 'memory-card-back';
         
-        el.addEventListener('click', () => {
-            flipMemoryCard(el, card);
+        cardEl.appendChild(front);
+        cardEl.appendChild(back);
+        
+        cardEl.addEventListener('click', () => {
+            flipMemoryCard(cardEl, card);
         });
         
-        container.appendChild(el);
+        container.appendChild(cardEl);
     });
 }
 
 export function flipMemoryCard(cardEl, cardData) {
-    if (!cardEl.classList.contains('closed') || state.selectedMemoryCards.length >= 2) return;
+    if (state.selectedMemoryCards.length >= 2 || 
+        cardEl.classList.contains('flipped') || 
+        cardEl.classList.contains('matched')) {
+        return;
+    }
     
-    cardEl.classList.remove('closed');
-    cardEl.classList.add('open');
+    cardEl.classList.add('flipped');
     
     // Speech synthesis for word on flip
     if (cardData.type === 'word') {
@@ -503,7 +519,8 @@ export function checkMemoryMatch() {
         
         state.matchedMemoryPairs += 1;
         state.gameScore += 2;
-        document.getElementById('game-score').textContent = state.gameScore;
+        const scoreEl = document.getElementById('game-score');
+        if (scoreEl) scoreEl.textContent = state.gameScore;
         
         const xpGained = getXPReward(c1.data.data);
         addXP(xpGained);
@@ -513,10 +530,8 @@ export function checkMemoryMatch() {
             setTimeout(endGame, 1000);
         }
     } else {
-        c1.el.classList.remove('open');
-        c1.el.classList.add('closed');
-        c2.el.classList.remove('open');
-        c2.el.classList.add('closed');
+        c1.el.classList.remove('flipped');
+        c2.el.classList.remove('flipped');
         playErrorSound();
         updateMastery(c1.data.id, false);
     }

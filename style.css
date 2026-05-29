@@ -288,6 +288,10 @@ button {
 .hero-section {
     margin-bottom: 2rem;
     text-align: center;
+    min-height: 95px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .hero-section h2 {
@@ -322,6 +326,8 @@ button {
     transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
+    min-height: 180px;
+    justify-content: center;
 }
 
 .category-card::before {
@@ -669,6 +675,18 @@ button {
     animation: pop 0.2s ease;
 }
 
+.letter-slot.correct {
+    border-color: var(--color-success) !important;
+    background: var(--color-success-light) !important;
+    color: var(--color-success) !important;
+}
+
+.letter-slot.wrong {
+    border-color: var(--color-error) !important;
+    background: var(--color-error-light) !important;
+    color: var(--color-error) !important;
+}
+
 .spelling-letters-pool {
     display: flex;
     justify-content: center;
@@ -969,6 +987,7 @@ select option {
     border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+    min-height: 280px;
 }
 
 /* Debug Console Panel */
