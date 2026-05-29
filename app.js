@@ -89,7 +89,9 @@ function registerServiceWorker() {
             
             // Periodically check for updates on the server
             setInterval(() => {
-                reg.update();
+                reg.update().catch(err => {
+                    logDebug(`ServiceWorker update check failed (possibly invalid state): ${err.message}`, 'warning');
+                });
             }, 60 * 1000); // Check every minute
             
             // Listen for new service workers installing
@@ -958,16 +960,16 @@ function initTheme() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark-mode');
         updateThemeButtons(true);
     } else {
-        document.body.classList.remove('dark-mode');
+        document.documentElement.classList.remove('dark-mode');
         updateThemeButtons(false);
     }
 }
 
 function toggleTheme() {
-    const isDark = document.body.classList.toggle('dark-mode');
+    const isDark = document.documentElement.classList.toggle('dark-mode');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     updateThemeButtons(isDark);
 }
