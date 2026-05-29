@@ -354,7 +354,7 @@ export function loadSpellingRound() {
         const typedString = state.spellingTypedLetters.map(x => x.letter).join('');
         const correct = verifySpellingWithWasm(typedString, cleanWord);
         
-        const container = document.getElementById('spelling-slots-container');
+        const container = document.getElementById('spelling-slots');
         if (correct) {
             container.querySelectorAll('.letter-tile').forEach(t => t.classList.add('correct'));
             playSuccessSound();
@@ -377,7 +377,7 @@ export function loadSpellingRound() {
 }
 
 export function updateSpellingSlots() {
-    const container = document.getElementById('spelling-slots-container');
+    const container = document.getElementById('spelling-slots');
     container.innerHTML = '';
     
     const card = state.sessionCards[state.currentCardIndex];

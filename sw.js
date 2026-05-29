@@ -58,6 +58,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch handler: cache-first approach for absolute offline speed
 self.addEventListener('fetch', (event) => {
+  // Bypass non-HTTP/HTTPS requests (like chrome-extension://, browser extension assets)
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
