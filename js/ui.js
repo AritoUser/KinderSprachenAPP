@@ -7,7 +7,7 @@ import { TRANSLATIONS, STICKERS_CONFIG } from './translations.js';
 import { speakGerman } from './audio.js';
 import { getWasmExports } from './wasm.js';
 import { showGameModal, hideGameModal, getWordTranslation } from './games.js';
-import { renderCreatorTable } from './creator.js';
+import { renderCreatorTable, handleAddVocab, exportVocabJSON } from './creator.js';
 
 export function switchScreen(screenId) {
     document.querySelectorAll('.app-screen').forEach(screen => {
@@ -344,6 +344,18 @@ export function initUI() {
         switchScreen('dashboard');
     });
     
+    // Form submission inside Content Creator
+    const vocabForm = document.getElementById('vocab-form');
+    if (vocabForm) {
+        vocabForm.addEventListener('submit', handleAddVocab);
+    }
+    
+    // Export vocabulary JSON
+    const exportJsonBtn = document.getElementById('export-json-btn');
+    if (exportJsonBtn) {
+        exportJsonBtn.addEventListener('click', exportVocabJSON);
+    }
+
     // Reset Progress
     document.getElementById('reset-progress-btn').addEventListener('click', () => {
         if (confirm('Do you really want to reset your entire learning progress (Level & XP)?')) {
@@ -435,6 +447,31 @@ export function initUI() {
         langSelect.value = state.language || 'de';
         langSelect.addEventListener('change', (e) => {
             applyLanguage(e.target.value);
+        });
+    }
+
+    // Help buttons logic
+    const matchHelpText = document.getElementById('match-help-text');
+    const matchHelpBtn = document.getElementById('match-help-btn');
+    if (matchHelpBtn && matchHelpText) {
+        matchHelpBtn.addEventListener('click', () => {
+            const correctCard = state.sessionCards[state.currentCardIndex];
+            if (correctCard) {
+                matchHelpText.textContent = getWordTranslation(correctCard);
+                matchHelpText.classList.toggle('hidden');
+            }
+        });
+    }
+
+    const spellingHelpText = document.getElementById('spelling-help-text');
+    const spellingHelpBtn = document.getElementById('spelling-help-btn');
+    if (spellingHelpBtn && spellingHelpText) {
+        spellingHelpBtn.addEventListener('click', () => {
+            const correctCard = state.sessionCards[state.currentCardIndex];
+            if (correctCard) {
+                spellingHelpText.textContent = getWordTranslation(correctCard);
+                spellingHelpText.classList.toggle('hidden');
+            }
         });
     }
 }
