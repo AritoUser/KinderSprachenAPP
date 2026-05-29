@@ -1063,9 +1063,11 @@ function updateThemeButtons(isDark) {
     const themeBtn = document.getElementById('theme-toggle-btn');
     const settingsThemeBtn = document.getElementById('settings-theme-toggle-btn');
     
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    
     const emoji = isDark ? '☀️' : '🌙';
-    const text = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-    const title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    const text = isDark ? (t.themeLight || '☀️ Light Mode') : (t.themeDark || '🌙 Dark Mode');
+    const title = isDark ? (t.themeLightTitle || 'Switch to Light Mode') : (t.themeDarkTitle || 'Switch to Dark Mode');
     
     if (themeBtn) {
         themeBtn.textContent = emoji;
@@ -1162,6 +1164,7 @@ function renderStickerAlbum() {
     container.innerHTML = '';
     
     const lang = state.language || 'de';
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
     
     STICKERS_CONFIG.forEach(sticker => {
         const isUnlocked = state.level >= sticker.level;
@@ -1179,7 +1182,7 @@ function renderStickerAlbum() {
         if (isUnlocked) {
             labelEl.textContent = sticker.name[lang] || sticker.name['de'];
         } else {
-            labelEl.textContent = `Lvl ${sticker.level}`;
+            labelEl.textContent = `${t.levelLabel || 'Lvl'} ${sticker.level}`;
             
             const lockEl = document.createElement('div');
             lockEl.className = 'sticker-lock-badge';
@@ -1340,6 +1343,12 @@ const TRANSLATIONS = {
         labelLicense: "Lizenz:",
         badgeOnline: "Online",
         footerText: "Mit ❤️ und ⚡ Zig WebAssembly für Kinder, die Deutsch lernen, entwickelt. Open Source auf GitHub.",
+        themeLight: "☀️ Hellmodus",
+        themeDark: "🌙 Dunkelmodus",
+        themeLightTitle: "Zu hellem Modus wechseln",
+        themeDarkTitle: "Zu dunklem Modus wechseln",
+        levelLabel: "Stufe",
+        levelBadgeLabel: "Level",
         categories: {
             'Tiere': 'Tiere',
             'Essen': 'Essen',
@@ -1430,6 +1439,12 @@ const TRANSLATIONS = {
         labelLicense: "License:",
         badgeOnline: "Online",
         footerText: "Made with ❤️ and ⚡ Zig WebAssembly for children learning German. Open Source on GitHub.",
+        themeLight: "☀️ Light Mode",
+        themeDark: "🌙 Dark Mode",
+        themeLightTitle: "Switch to Light Mode",
+        themeDarkTitle: "Switch to Dark Mode",
+        levelLabel: "Level",
+        levelBadgeLabel: "Level",
         categories: {
             'Tiere': 'Animals',
             'Essen': 'Food',
@@ -1520,6 +1535,12 @@ const TRANSLATIONS = {
         labelLicense: "الترخيص:",
         badgeOnline: "متصل",
         footerText: "تم التطوير بكل ❤️ و ⚡ باستخدام Zig WebAssembly للأطفال الذين يتعلمون الألمانية. مفتوح المصدر على GitHub.",
+        themeLight: "☀️ الوضع الفاتح",
+        themeDark: "🌙 الوضع الداكن",
+        themeLightTitle: "التبديل إلى الوضع الفاتح",
+        themeDarkTitle: "التبديل إلى الوضع الداكن",
+        levelLabel: "مستوى",
+        levelBadgeLabel: "مستوى",
         categories: {
             'Tiere': 'حيوانات',
             'Essen': 'طعام',
@@ -1610,6 +1631,12 @@ const TRANSLATIONS = {
         labelLicense: "Ліцензія:",
         badgeOnline: "В мережі",
         footerText: "Створено з ❤️ та ⚡ за допомогою Zig WebAssembly для дітей, що вивчають німецьку мову. Відкритий код на GitHub.",
+        themeLight: "☀️ Світлий режим",
+        themeDark: "🌙 Темний режим",
+        themeLightTitle: "Перейти на світлий режим",
+        themeDarkTitle: "Перейти на темний режим",
+        levelLabel: "Рівень",
+        levelBadgeLabel: "Рівень",
         categories: {
             'Tiere': 'Тварини',
             'Essen': 'Їжа',
@@ -1700,6 +1727,12 @@ const TRANSLATIONS = {
         labelLicense: "Lisans:",
         badgeOnline: "Çevrimiçi",
         footerText: "Almanca öğrenen çocuklar için ❤️ ve ⚡ Zig WebAssembly ile geliştirilmiştir. GitHub'da Açık Kaynak.",
+        themeLight: "☀️ Açık Mod",
+        themeDark: "🌙 Karanlık Mod",
+        themeLightTitle: "Açık moda geç",
+        themeDarkTitle: "Karanlık moda geç",
+        levelLabel: "Seviye",
+        levelBadgeLabel: "Seviye",
         categories: {
             'Tiere': 'Hayvanlar',
             'Essen': 'Yiyecek',
@@ -1790,6 +1823,12 @@ const TRANSLATIONS = {
         labelLicense: "Лицензия:",
         badgeOnline: "В сети",
         footerText: "Создано с ❤️ и ⚡ с помощью Zig WebAssembly для детей, изучающих немецкий язык. Открытый код на GitHub.",
+        themeLight: "☀️ Светлый режим",
+        themeDark: "🌙 Темный режим",
+        themeLightTitle: "Перейти на светлый режим",
+        themeDarkTitle: "Перейти на темный режим",
+        levelLabel: "Уровень",
+        levelBadgeLabel: "Уровень",
         categories: {
             'Tiere': 'Животные',
             'Essen': 'Еда',
@@ -1956,6 +1995,7 @@ function applyLanguage(lang) {
     
     populateCategoryDropdown();
     renderCategories();
+    updateThemeButtons(document.documentElement.classList.contains('dark-mode'));
     
     if (document.getElementById('screen-stickers').classList.contains('active')) {
         renderStickerAlbum();

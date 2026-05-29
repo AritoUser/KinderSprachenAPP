@@ -1038,6 +1038,14 @@ select option {
 .settings-actions {
     display: flex;
     gap: 0.5rem;
+    width: 100%;
+}
+
+.settings-actions .btn,
+.settings-actions select {
+    width: 100% !important;
+    text-align: center;
+    justify-content: center;
 }
 
 /* COMMON UTILITIES & BUTTONS */
@@ -1281,9 +1289,10 @@ select option {
 
 .sticker-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    justify-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    gap: 0.75rem;
+    justify-content: center;
+    width: 100%;
 }
 
 .sticker-item {
