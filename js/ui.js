@@ -10,7 +10,7 @@ import { showGameModal, hideGameModal, getWordTranslation } from './games.js';
 import { renderCreatorTable, handleAddVocab, exportVocabJSON } from './creator.js';
 
 export function switchScreen(screenId) {
-    document.querySelectorAll('.app-screen').forEach(screen => {
+    document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
     const target = document.getElementById(`screen-${screenId}`);
