@@ -1251,6 +1251,166 @@ function startConfetti() {
     animate();
 }
 
+function populateCategoryDropdown() {
+    const catSelect = document.getElementById('vocab-category');
+    if (!catSelect) return;
+    const currentVal = catSelect.value;
+    catSelect.innerHTML = '';
+    const categories = ['Tiere', 'Essen', 'Farben', 'Schule', 'Kleidung', 'Körper', 'Familie', 'Haus', 'Spielzeug', 'Natur'];
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        const translatedName = (t.categories && t.categories[cat]) ? t.categories[cat] : cat;
+        option.textContent = translatedName === cat ? cat : `${translatedName} (${cat})`;
+        catSelect.appendChild(option);
+    });
+    if (currentVal) {
+        catSelect.value = currentVal;
+    }
+}
+
+function applyLanguage(lang) {
+    state.language = lang;
+    localStorage.setItem('user_language', lang);
+    
+    document.documentElement.lang = lang;
+    
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    
+    const dashboardHeroTitle = document.querySelector('#screen-dashboard .hero-section h2');
+    if (dashboardHeroTitle) dashboardHeroTitle.textContent = t.welcomeTitle;
+    const dashboardHeroSubtitle = document.querySelector('#screen-dashboard .hero-section p');
+    if (dashboardHeroSubtitle) dashboardHeroSubtitle.textContent = t.welcomeSubtitle;
+    
+    const creatorHeroTitle = document.querySelector('#screen-creator .hero-section h2');
+    if (creatorHeroTitle) creatorHeroTitle.textContent = t.creatorTitle;
+    const creatorHeroSubtitle = document.querySelector('#screen-creator .hero-section p');
+    if (creatorHeroSubtitle) creatorHeroSubtitle.textContent = t.creatorSubtitle;
+    
+    const settingsHeroTitle = document.querySelector('#screen-settings .hero-section h2');
+    if (settingsHeroTitle) settingsHeroTitle.textContent = t.settingsTitle;
+    const settingsHeroSubtitle = document.querySelector('#screen-settings .hero-section p');
+    if (settingsHeroSubtitle) settingsHeroSubtitle.textContent = t.settingsSubtitle;
+    
+    const elMap = {
+        'modal-category-title': t.chooseGame,
+        'stickers-title': t.stickersTitle,
+        'stickers-subtitle': t.stickersSubtitle,
+        'settings-lang-title': t.settingsLangTitle,
+        'settings-lang-desc': t.settingsLangDesc,
+        'reset-progress-btn': t.resetProgressBtn,
+        'trigger-update-check-btn': t.checkUpdatesBtn,
+        'copy-debug-logs-btn': p => p ? p.textContent = t.copyLogsBtn : null,
+        'clear-debug-logs-btn': p => p ? p.textContent = t.clearLogsBtn : null,
+        
+        // Progress bar level badge
+        'level-badge-label': t.levelBadgeLabel || 'Level',
+        
+        // Form Labels in Content Creator
+        'label-vocab-article': t.labelArticle,
+        'label-vocab-word': t.labelWord,
+        'label-vocab-translation': t.labelTranslation,
+        'label-vocab-emoji': t.labelEmoji,
+        'label-vocab-category': t.labelCategory,
+        'label-vocab-difficulty': t.labelDifficulty,
+        
+        // Article dropdown options
+        'opt-art-der': t.optDer,
+        'opt-art-die': t.optDie,
+        'opt-art-das': t.optDas,
+        'opt-art-none': t.optNone,
+        
+        // Difficulty dropdown options
+        'opt-diff-easy': t.optEasy,
+        'opt-diff-medium': t.optMedium,
+        'opt-diff-hard': t.optHard,
+        
+        // Input placeholders
+        'vocab-word': p => p ? p.placeholder = t.placeholderWord : null,
+        'vocab-translation': p => p ? p.placeholder = t.placeholderTranslation : null,
+        'vocab-emoji': p => p ? p.placeholder = t.placeholderEmoji : null,
+        
+        // Add vocabulary button
+        'vocab-submit-btn': t.buttonAddCard,
+        
+        // Table Headers / Preview text
+        'title-preview-header': p => p ? p.innerHTML = `${t.titlePreview} (<span id="vocab-count">${state.vocabulary.length}</span> ${t.wordsCount})` : null,
+        'desc-preview-p': t.descPreview,
+        'th-image': t.thImage,
+        'th-word': t.thWord,
+        'th-translation': t.thTranslation,
+        'th-category': t.thCategory,
+        'th-action': t.thAction,
+        
+        // Export button
+        'export-json-btn': t.exportJsonBtn,
+        
+        // Game mode modal selections
+        'modal-game-subtitle': t.chooseGame,
+        'game-match-title': t.gameMatchTitle,
+        'game-match-desc': t.gameMatchDesc,
+        'game-spelling-title': t.gameSpellingTitle,
+        'game-spelling-desc': t.gameSpellingDesc,
+        'game-memory-title': t.gameMemoryTitle,
+        'game-memory-desc': t.gameMemoryDesc,
+        
+        // Game Views elements
+        'game-back-btn': p => p ? p.innerHTML = `⬅️ ${t.backBtn || 'Back'}` : null,
+        'match-question-prompt': t.matchQuestionPrompt,
+        'spelling-question-prompt': t.spellingQuestionPrompt,
+        'spelling-clear-btn': p => p ? p.innerHTML = `❌ ${t.clearBtn || 'Clear'}` : null,
+        'spelling-submit-btn': p => p ? p.innerHTML = `✔️ ${t.checkBtn || 'Check'}` : null,
+        'memory-question-prompt': t.memoryQuestionPrompt,
+        
+        // Game over screen overlay
+        'game-over-title': t.gameOverTitle,
+        'game-over-desc': t.gameOverDesc,
+        'game-finish-btn': t.continueBtn,
+        
+        // Settings Card Texts
+        'settings-storage-title': t.settingsStorageTitle,
+        'settings-storage-desc': t.settingsStorageDesc,
+        'settings-theme-title': t.settingsThemeTitle,
+        'settings-theme-desc': t.settingsThemeDesc,
+        'settings-theme-toggle-btn': t.themeToggleBtn,
+        'settings-updates-title': t.settingsUpdatesTitle,
+        'settings-updates-desc': t.settingsUpdatesDesc,
+        'settings-debug-title': t.settingsDebugTitle,
+        'settings-debug-desc': t.settingsDebugDesc,
+        'settings-sysinfo-title': t.settingsSysInfoTitle,
+        'label-online-status': t.labelOnlineStatus,
+        'label-app-version': t.labelAppVersion,
+        'label-core-engine': t.labelCoreEngine,
+        'label-license': t.labelLicense,
+        
+        // Footer text
+        'app-footer-text': t.footerText
+    };
+    
+    Object.keys(elMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (typeof elMap[id] === 'function') {
+                elMap[id](el);
+            } else {
+                el.textContent = elMap[id];
+            }
+        }
+    });
+    
+    populateCategoryDropdown();
+    renderCategories();
+    updateThemeButtons(document.documentElement.classList.contains('dark-mode'));
+    
+    if (document.getElementById('screen-stickers').classList.contains('active')) {
+        renderStickerAlbum();
+    }
+    
+    renderCreatorTable();
+}
+
 function getWordTranslation(item, lang = state.language || 'de') {
     const isCustom = state.customVocabulary.some(cv => cv.id === item.id);
     if (isCustom) {
