@@ -1,12 +1,20 @@
 // sw.js
 // Service Worker for offline availability and update checking.
 
-const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.7';
+const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.8';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
   'style.css',
-  'app.js',
+  'js/app.js',
+  'js/state.js',
+  'js/wasm.js',
+  'js/audio.js',
+  'js/confetti.js',
+  'js/translations.js',
+  'js/ui.js',
+  'js/creator.js',
+  'js/games.js',
   'content/vocabulary.json',
   'assets/wasm/core.wasm',
   'manifest.json',

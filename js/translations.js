@@ -1,8 +1,8 @@
-// translations.js
+// js/translations.js
 // Static vocabulary translations, UI translations, and sticker configurations.
 // Part of the KinderSprachenAPP open-source project.
 
-const STICKERS_CONFIG = [
+export const STICKERS_CONFIG = [
     { level: 1, emoji: '🐱', name: { de: 'Katze', en: 'Cat', ar: 'قطة', uk: 'Кішка', tr: 'Kedi', ru: 'Кошка' } },
     { level: 1, emoji: '🐶', name: { de: 'Hund', en: 'Dog', ar: 'كلб', uk: 'Собака', tr: 'Köpek', ru: 'Собака' } },
     { level: 1, emoji: '⚽', name: { de: 'Ball', en: 'Ball', ar: 'كرة', uk: 'М\'яч', tr: 'Top', ru: 'Мяч' } },
@@ -12,12 +12,12 @@ const STICKERS_CONFIG = [
     { level: 5, emoji: '🦖', name: { de: 'Dino', en: 'Dinosaur', ar: 'ديناصور', uk: 'Динозавр', tr: 'Dinozor', ru: 'Динозавр' } },
     { level: 6, emoji: '🐬', name: { de: 'Delfin', en: 'Dolphin', ar: 'دولفين', uk: 'Дельфін', tr: 'Yunus', ru: 'Дельфін' } },
     { level: 7, emoji: '🧸', name: { de: 'Teddy', en: 'Teddy Bear', ar: 'دبدوب', uk: 'Ведмедик', tr: 'Oyuncak ayı', ru: 'Мишка' } },
-    { level: 8, emoji: '🦊', name: { de: 'Fuchs', en: 'Fox', ar: 'ثعلب', uk: 'Лис', tr: 'Tilki', ru: 'Лиса' } },
+    { level: 8, emoji: '🦊', name: { de: 'Fuchs', en: 'Fox', ar: 'ثعلб', uk: 'Лис', tr: 'Tilki', ru: 'Лиса' } },
     { level: 9, emoji: '🦉', name: { de: 'Eule', en: 'Owl', ar: 'بومة', uk: 'Сова', tr: 'Baykuş', ru: 'Сова' } },
     { level: 10, emoji: '👑', name: { de: 'Krone', en: 'Crown', ar: 'تاج', uk: 'Корона', tr: 'Taç', ru: 'Корона' } }
 ];
 
-const TRANSLATIONS = {
+export const TRANSLATIONS = {
     de: {
         welcomeTitle: "Hallo! Was möchtest du heute lernen? 🌟",
         welcomeSubtitle: "Wähle eine Kategorie und starte ein Spiel!",
@@ -86,13 +86,13 @@ const TRANSLATIONS = {
         settingsThemeDesc: "Ändern Sie das Erscheinungsbild der Anwendung. Wählen Sie zwischen hellem und dunklem Modus.",
         settingsUpdatesTitle: "🔄 Test GitHub Updates",
         settingsUpdatesDesc: "Prüfen Sie manuell, ob eine neuere Version der Anwendung im GitHub-Repository verfügbar ist.",
-        settingsDebugTitle: "🐞 Debug- und Fehlerprotokolle",
-        settingsDebugDesc: "Falls Probleme auftreten, können Sie das Debug-Protokoll kopieren, um diese auf GitHub zu melden.",
+        settingsDebugTitle: "🐞 Debug- und Fehlerprotколы",
+        settingsDebugDesc: "Falls Probleme auftreten, können Sie das Debug-Protokoll kopieren, чтобы сообщить о них на GitHub.",
         settingsSysInfoTitle: "ℹ️ Systeminformationen",
         labelOnlineStatus: "Online-Status:",
         labelAppVersion: "App-Version:",
         labelCoreEngine: "Kern-Engine:",
-        labelLicense: "Lizenz:",
+        labelLicense: "Лицензия:",
         badgeOnline: "Online",
         footerText: "Mit ❤️ und ⚡ Zig WebAssembly für Kinder, die Deutsch lernen, entwickelt. Open Source auf GitHub.",
         themeLight: "☀️ Hellmodus",
@@ -264,7 +264,7 @@ const TRANSLATIONS = {
         spellingQuestionPrompt: "تهجى الكلمة:",
         memoryQuestionPrompt: "ابحث عن كل الأزواج! اضغط على البطاقات.",
         gameOverTitle: "عمل رائع!",
-        gameOverDesc: "لقد قمت بحل جميع المهام!",
+        gameOverDesc: "لقд قمت بحل جميع المهام!",
         continueBtn: "استمرار",
         gameMatchTitle: "اختبار الكلمة والصورة",
         gameMatchDesc: "جد الكلمة الألمانية الصحيحة للصورة!",
@@ -373,7 +373,7 @@ const TRANSLATIONS = {
         settingsThemeTitle: "🎨 Дизайн та Тема",
         settingsThemeDesc: "Змініть зовнішній вигляд програми. Виберіть світлий або темний режим.",
         settingsUpdatesTitle: "🔄 Перевірка оновлень з GitHub",
-        settingsUpdatesDesc: "Вручну перевірте, чи доступна новіша версія програми в репозиторії GitHub.",
+        settingsUpdatesDesc: "Вручную перевірте, чи доступна новіша версія програми в репозиторії GitHub.",
         settingsDebugTitle: "🐞 Логи налагодження та помилок",
         settingsDebugDesc: "Якщо у вас виникли проблеми, ви можете скопіювати лог налагодження, щоб повідомити про них на GitHub.",
         settingsSysInfoTitle: "ℹ️ Системна інформація",
@@ -561,7 +561,7 @@ const TRANSLATIONS = {
         gameMemoryTitle: "Игра на память",
         gameMemoryDesc: "Найди подходящие пары слов и эмодзи!",
         settingsStorageTitle: "💾 Прогресс и Сохранение",
-        settingsStorageDesc: "Ваш игровой прогрес (уровень, XP) сохраняется локально на этом устройстве и остается в безопасности во время обновлений.",
+        settingsStorageDesc: "Ваш игровой прогресс (уровень, XP) сохраняется локально на этом устройстве и остается в безопасности во время обновлений.",
         settingsThemeTitle: "🎨 Дизайн и Тема",
         settingsThemeDesc: "Измените внешний вид приложения. Выберите светлый или темный режим.",
         settingsUpdatesTitle: "🔄 Проверить обновления с GitHub",
@@ -596,7 +596,7 @@ const TRANSLATIONS = {
     }
 };
 
-const VOCAB_TRANSLATIONS = {
+export const VOCAB_TRANSLATIONS = {
     hund: { en: "dog", ar: "كلب", uk: "собака", tr: "köpek", ru: "собака" },
     katze: { en: "cat", ar: "قطة", uk: "кішка", tr: "kedi", ru: "кошка" },
     maus: { en: "mouse", ar: "فأر", uk: "миша", tr: "fare", ru: "мышь" },
@@ -605,12 +605,12 @@ const VOCAB_TRANSLATIONS = {
     fisch: { en: "fish", ar: "سمكة", uk: "риба", tr: "balık", ru: "рыба" },
     apfel: { en: "apple", ar: "تفاحة", uk: "яблуко", tr: "elma", ru: "яблоко" },
     banane: { en: "banana", ar: "موز", uk: "банан", tr: "muz", ru: "банан" },
-    brot: { en: "bread", ar: "خبز", uk: "хліб", tr: "ekmek", ru: "хлеб" },
+    brot: { en: "bread", ar: "خبз", uk: "хліб", tr: "ekmek", ru: "хлеб" },
     milch: { en: "milk", ar: "حليب", uk: "молоко", tr: "süt", ru: "молоко" },
-    erdbeere: { en: "strawberry", ar: "فраولة", uk: "полуниця", tr: "çilek", ru: "клубника" },
+    erdbeere: { en: "strawberry", ar: "فراولة", uk: "полуниця", tr: "çilek", ru: "клубника" },
     pizza: { en: "pizza", ar: "بيتزا", uk: "піца", tr: "pizza", ru: "пицца" },
     rot: { en: "red", ar: "أحمر", uk: "червоний", tr: "kırmızı", ru: "красный" },
-    blau: { en: "blue", ar: "أзرق", uk: "синій", tr: "mavi", ru: "синий" },
+    blau: { en: "blue", ar: "أزرق", uk: "синій", tr: "mavi", ru: "синий" },
     gruen: { en: "green", ar: "أخضر", uk: "зелений", tr: "yeşil", ru: "зеленый" },
     gelb: { en: "yellow", ar: "أصفر", uk: "жовтий", tr: "sarı", ru: "желтый" },
     orange: { en: "orange", ar: "برتقالي", uk: "помаранчевий", tr: "turuncu", ru: "оранжевый" },
@@ -624,8 +624,8 @@ const VOCAB_TRANSLATIONS = {
     muetze: { en: "beanie / cap", ar: "قبعة", uk: "шапка", tr: "bere", ru: "шапка" },
     auge: { en: "eye", ar: "عين", uk: "око", tr: "göz", ru: "глаз" },
     ohr: { en: "ear", ar: "أذن", uk: "вухо", tr: "kulak", ru: "ухо" },
-    nase: { en: "nose", ar: "أنф", uk: "ніс", tr: "burun", ru: "нос" },
-    mund: { en: "mouth", ar: "فм", uk: "рот", tr: "ağız", ru: "рот" },
+    nase: { en: "nose", ar: "أنف", uk: "ніс", tr: "burun", ru: "нос" },
+    mund: { en: "mouth", ar: "فم", uk: "рот", tr: "ağız", ru: "рот" },
     hand: { en: "hand", ar: "يد", uk: "рука", tr: "el", ru: "рука" },
     fuss: { en: "foot", ar: "قدم", uk: "нога / стопа", tr: "ayak", ru: "нога / стопа" },
     mama: { en: "mom / mother", ar: "أمي", uk: "мама", tr: "anne", ru: "мама" },
@@ -634,7 +634,7 @@ const VOCAB_TRANSLATIONS = {
     bruder: { en: "brother", ar: "أخ", uk: "брат", tr: "erkek kardeş", ru: "брат" },
     schwester: { en: "sister", ar: "أخت", uk: "сестра", tr: "kız kardeş", ru: "сестра" },
     haus: { en: "house", ar: "بيت", uk: "будинок", tr: "ev", ru: "дом" },
-    bett: { en: "bed", ar: "سرير", uk: "ліжко", tr: "yatak", ru: "кровать" },
+    bett: { en: "bed", ar: "серир", uk: "ліжко", tr: "yatak", ru: "кровать" },
     tisch: { en: "table", ar: "طاولة", uk: "стіл", tr: "masa", ru: "стол" },
     tuer: { en: "door", ar: "باب", uk: "двері", tr: "kapı", ru: "дверь" },
     ball: { en: "ball", ar: "كرة", uk: "м'яч", tr: "top", ru: "мяч" },
@@ -642,7 +642,7 @@ const VOCAB_TRANSLATIONS = {
     auto: { en: "car", ar: "سيارة", uk: "машина", tr: "araba", ru: "машина" },
     sonne: { en: "sun", ar: "شمس", uk: "сонце", tr: "güneş", ru: "солнце" },
     mond: { en: "moon", ar: "قمر", uk: "місяць", tr: "ay", ru: "луна" },
-    baum: { en: "tree", ar: "шجرة", uk: "дерево", tr: "ağaç", ru: "дерево" },
-    blume: { en: "flower", ar: "зهرة", uk: "квітка", tr: "çiçek", ru: "цветок" },
+    baum: { en: "tree", ar: "شجرة", uk: "дерево", tr: "ağaç", ru: "дерево" },
+    blume: { en: "flower", ar: "زهرة", uk: "квітка", tr: "çiçek", ru: "цветок" },
     wolke: { en: "cloud", ar: "سحابة", uk: "хмара", tr: "bulut", ru: "облако" }
 };
