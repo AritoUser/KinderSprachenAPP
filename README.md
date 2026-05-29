@@ -21,6 +21,7 @@ The app is **fully offline-capable** and works on all devices from **smartphones
   - `src/core.zig` - Logic core written in Zig.
   - `content/vocabulary.json` - Vocabulary database.
   - `index.html`, `style.css`, `app.js` - App frontend.
+  - `translations.js` - Static vocabulary translations, UI translation strings, and stickers configuration.
   - `sw.js` - Service Worker for offline caching and updating.
   - `tools/zig/` - Local Zig compiler (automatically set up via script).
 

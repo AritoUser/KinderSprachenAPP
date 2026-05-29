@@ -49,6 +49,14 @@ Each word follows this structure:
 }
 ```
 
+### How to Add or Improve Translations?
+The UI text translations, default vocabulary translations, and sticker lists are managed in [translations.js](translations.js). 
+
+If you want to:
+- **Add a new language**: Add a new language key (e.g. `es` for Spanish) to the `TRANSLATIONS` object in `translations.js`. Then, append translations under that language key inside the `VOCAB_TRANSLATIONS` dictionary.
+- **Improve existing translations**: Edit the specific language keys inside `TRANSLATIONS` or `VOCAB_TRANSLATIONS` in `translations.js`.
+- **Add new stickers**: Add new sticker objects with required level thresholds, emojis, and localized names to `STICKERS_CONFIG` in `translations.js`.
+
 ---
 
 ## 🎨 Design Guidelines
