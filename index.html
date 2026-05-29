@@ -62,6 +62,7 @@
                 <button id="theme-toggle-btn" class="nav-btn" title="Toggle Theme">🌓</button>
                 <button id="nav-dashboard-btn" class="nav-btn active" title="Play Games">🎮</button>
                 <button id="nav-creator-btn" class="nav-btn" title="Add Vocabulary">➕</button>
+                <button id="nav-stickers-btn" class="nav-btn" title="Sticker Album">📖</button>
                 <button id="nav-settings-btn" class="nav-btn" title="Settings">⚙️</button>
             </nav>
         </header>
@@ -280,6 +281,20 @@
                 </div>
             </section>
 
+            <!-- SECTION: STICKER ALBUM -->
+            <section id="screen-stickers" class="screen">
+                <div class="hero-section animate-scale">
+                    <h2 id="stickers-title">My Sticker Album 📖</h2>
+                    <p id="stickers-subtitle">Level up to collect all stickers! Tap unlocked stickers for a surprise! ✨</p>
+                </div>
+                
+                <div class="sticker-album-container glass">
+                    <div class="sticker-grid" id="sticker-grid-container">
+                        <!-- Dynamic Stickers will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
             <!-- SECTION 4: SETTINGS & ABOUT -->
             <section id="screen-settings" class="screen">
                 <div class="hero-section">
@@ -294,6 +309,22 @@
                         <p>Your game progress (level, XP) is stored locally on this device and remains safe during application updates.</p>
                         <div class="settings-actions">
                             <button id="reset-progress-btn" class="btn btn-danger">🗑️ Reset Progress</button>
+                        </div>
+                    </div>
+
+                    <!-- Language Settings Card -->
+                    <div class="settings-card glass">
+                        <h3 id="settings-lang-title">🌐 Language / Sprache</h3>
+                        <p id="settings-lang-desc">Choose your preferred language for the buttons and instructions.</p>
+                        <div class="settings-actions">
+                            <select id="settings-language-select" class="btn btn-secondary" style="width: 100%; font-size: 1rem; padding: 0.75rem; border-radius: var(--radius-small);">
+                                <option value="de">Deutsch (German)</option>
+                                <option value="en">English</option>
+                                <option value="ar">العربية (Arabic)</option>
+                                <option value="uk">Українська (Ukrainian)</option>
+                                <option value="tr">Türkçe (Turkish)</option>
+                                <option value="ru">Русский (Russian)</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -351,5 +382,6 @@
 
     <!-- Script imports -->
     <script src="app.js"></script>
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></canvas>
 </body>
 </html>

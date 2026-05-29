@@ -198,5 +198,189 @@
     "category": "Kleidung",
     "emoji": "🧢",
     "difficulty": 2
+  },
+  {
+    "id": "auge",
+    "word": "das Auge",
+    "translation": "eye",
+    "category": "Körper",
+    "emoji": "👁️",
+    "difficulty": 1
+  },
+  {
+    "id": "ohr",
+    "word": "das Ohr",
+    "translation": "ear",
+    "category": "Körper",
+    "emoji": "👂",
+    "difficulty": 1
+  },
+  {
+    "id": "nase",
+    "word": "die Nase",
+    "translation": "nose",
+    "category": "Körper",
+    "emoji": "👃",
+    "difficulty": 1
+  },
+  {
+    "id": "mund",
+    "word": "der Mund",
+    "translation": "mouth",
+    "category": "Körper",
+    "emoji": "👄",
+    "difficulty": 1
+  },
+  {
+    "id": "hand",
+    "word": "die Hand",
+    "translation": "hand",
+    "category": "Körper",
+    "emoji": "✋",
+    "difficulty": 1
+  },
+  {
+    "id": "fuss",
+    "word": "der Fuß",
+    "translation": "foot",
+    "category": "Körper",
+    "emoji": "👣",
+    "difficulty": 1
+  },
+  {
+    "id": "mama",
+    "word": "die Mama",
+    "translation": "mom / mother",
+    "category": "Familie",
+    "emoji": "👩",
+    "difficulty": 1
+  },
+  {
+    "id": "papa",
+    "word": "der Papa",
+    "translation": "dad / father",
+    "category": "Familie",
+    "emoji": "👨",
+    "difficulty": 1
+  },
+  {
+    "id": "baby",
+    "word": "das Baby",
+    "translation": "baby",
+    "category": "Familie",
+    "emoji": "👶",
+    "difficulty": 1
+  },
+  {
+    "id": "bruder",
+    "word": "der Bruder",
+    "translation": "brother",
+    "category": "Familie",
+    "emoji": "👦",
+    "difficulty": 2
+  },
+  {
+    "id": "schwester",
+    "word": "die Schwester",
+    "translation": "sister",
+    "category": "Familie",
+    "emoji": "👧",
+    "difficulty": 2
+  },
+  {
+    "id": "haus",
+    "word": "das Haus",
+    "translation": "house",
+    "category": "Haus",
+    "emoji": "🏠",
+    "difficulty": 1
+  },
+  {
+    "id": "bett",
+    "word": "das Bett",
+    "translation": "bed",
+    "category": "Haus",
+    "emoji": "🛏️",
+    "difficulty": 1
+  },
+  {
+    "id": "tisch",
+    "word": "der Tisch",
+    "translation": "table",
+    "category": "Haus",
+    "emoji": "🪑",
+    "difficulty": 1
+  },
+  {
+    "id": "tuer",
+    "word": "die Tür",
+    "translation": "door",
+    "category": "Haus",
+    "emoji": "🚪",
+    "difficulty": 1
+  },
+  {
+    "id": "ball",
+    "word": "der Ball",
+    "translation": "ball",
+    "category": "Spielzeug",
+    "emoji": "⚽",
+    "difficulty": 1
+  },
+  {
+    "id": "puppe",
+    "word": "die Puppe",
+    "translation": "doll",
+    "category": "Spielzeug",
+    "emoji": "🪆",
+    "difficulty": 2
+  },
+  {
+    "id": "auto",
+    "word": "das Auto",
+    "translation": "car",
+    "category": "Spielzeug",
+    "emoji": "🚗",
+    "difficulty": 1
+  },
+  {
+    "id": "sonne",
+    "word": "die Sonne",
+    "translation": "sun",
+    "category": "Natur",
+    "emoji": "☀️",
+    "difficulty": 1
+  },
+  {
+    "id": "mond",
+    "word": "der Mond",
+    "translation": "moon",
+    "category": "Natur",
+    "emoji": "🌙",
+    "difficulty": 1
+  },
+  {
+    "id": "baum",
+    "word": "der Baum",
+    "translation": "tree",
+    "category": "Natur",
+    "emoji": "🌳",
+    "difficulty": 1
+  },
+  {
+    "id": "blume",
+    "word": "die Blume",
+    "translation": "flower",
+    "category": "Natur",
+    "emoji": "🌸",
+    "difficulty": 1
+  },
+  {
+    "id": "wolke",
+    "word": "die Wolke",
+    "translation": "cloud",
+    "category": "Natur",
+    "emoji": "☁️",
+    "difficulty": 2
   }
 ]

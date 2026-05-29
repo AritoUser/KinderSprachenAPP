@@ -39,6 +39,8 @@ let state = {
     customVocabulary: [], // Added via Creator
     activeCategory: null,
     activeGame: null, // 'match', 'spelling', 'memory'
+    mastery: {}, // wordId -> level (0-3)
+    stickers: [], // list of unlocked sticker emojis
     // Active session stats
     gameScore: 0,
     sessionCards: [],
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadProgress();
     initTheme();
     initUI();
+    applyLanguage(state.language);
     document.getElementById('app-version-badge').textContent = CONFIG.version;
     registerServiceWorker();
     
@@ -293,11 +296,21 @@ async function loadVocabulary() {
 function loadProgress() {
     state.xp = parseInt(localStorage.getItem('user_xp')) || CONFIG.defaultXP;
     state.level = parseInt(localStorage.getItem('user_level')) || 1;
+    state.language = localStorage.getItem('user_language') || 'de';
+    try {
+        state.mastery = JSON.parse(localStorage.getItem('user_mastery')) || {};
+        state.stickers = JSON.parse(localStorage.getItem('user_stickers')) || [];
+    } catch (e) {
+        state.mastery = {};
+        state.stickers = [];
+    }
 }
 
 function saveProgress() {
     localStorage.setItem('user_xp', state.xp);
     localStorage.setItem('user_level', state.level);
+    localStorage.setItem('user_mastery', JSON.stringify(state.mastery));
+    localStorage.setItem('user_stickers', JSON.stringify(state.stickers));
     updateXPBar();
 }
 
@@ -316,7 +329,16 @@ function addXP(amount) {
 }
 
 function showLevelUpEffect() {
-    alert(`🎉 Congratulations! You reached Level ${state.level}! 🌟 Keep it up!`);
+    startConfetti();
+    
+    // Find stickers unlocked at this level
+    const newlyUnlocked = STICKERS_CONFIG.filter(s => s.level === state.level);
+    if (newlyUnlocked.length > 0) {
+        const emojis = newlyUnlocked.map(s => s.emoji).join(' ');
+        alert(`🎉 LEVEL UP! You reached Level ${state.level}! 🌟\n\n🎁 You unlocked new stickers: ${emojis}\nCheck them in your Sticker Album! 📖`);
+    } else {
+        alert(`🎉 LEVEL UP! You reached Level ${state.level}! 🌟 Keep it up!`);
+    }
 }
 
 // --- 5. UI CONTROLLERS ---
@@ -327,6 +349,10 @@ function initUI() {
     document.getElementById('nav-creator-btn').addEventListener('click', () => {
         switchScreen('creator');
         renderCreatorTable();
+    });
+    document.getElementById('nav-stickers-btn').addEventListener('click', () => {
+        switchScreen('stickers');
+        renderStickerAlbum();
     });
     document.getElementById('nav-settings-btn').addEventListener('click', () => switchScreen('settings'));
     
@@ -356,6 +382,8 @@ function initUI() {
             state.xp = CONFIG.defaultXP;
             state.level = 1;
             state.customVocabulary = [];
+            state.mastery = {};
+            state.stickers = [];
             loadVocabulary().then(() => {
                 saveProgress();
                 renderCategories();
@@ -430,6 +458,15 @@ function initUI() {
     
     // Export vocabulary JSON
     document.getElementById('export-json-btn').addEventListener('click', exportVocabJSON);
+    
+    // Language dropdown change
+    const langSelect = document.getElementById('settings-language-select');
+    if (langSelect) {
+        langSelect.value = state.language || 'de';
+        langSelect.addEventListener('change', (e) => {
+            applyLanguage(e.target.value);
+        });
+    }
 }
 
 function switchScreen(screenId) {
@@ -566,8 +603,11 @@ function startGame(gameType) {
     document.getElementById('game-view-spelling').classList.add('hidden');
     document.getElementById('game-view-memory').classList.add('hidden');
     
-    const shuffledIndexes = shuffleIndicesWithWasm(catWords.length);
-    state.sessionCards = shuffledIndexes.slice(0, 5).map(idx => catWords[idx]);
+    if (gameType === 'memory') {
+        state.sessionCards = getWeightedRandomWords(catWords, 4);
+    } else {
+        state.sessionCards = getWeightedRandomWords(catWords, 5);
+    }
     state.currentCardIndex = 0;
     
     if (gameType === 'match') {
@@ -577,7 +617,6 @@ function startGame(gameType) {
         document.getElementById('game-view-spelling').classList.remove('hidden');
         loadSpellingRound();
     } else if (gameType === 'memory') {
-        state.sessionCards = shuffledIndexes.slice(0, 4).map(idx => catWords[idx]);
         document.getElementById('game-view-memory').classList.remove('hidden');
         loadMemoryGame();
     }
@@ -633,8 +672,10 @@ function verifyMatchAnswer(button, selectedChoice, correctCard) {
     const isCorrect = selectedChoice.id === correctCard.id;
     if (isCorrect) {
         button.classList.add('correct');
-        state.gameScore += 10;
+        const xpGained = getXPReward(correctCard);
+        state.gameScore += xpGained;
         document.getElementById('game-score').textContent = state.gameScore;
+        updateMastery(correctCard.id, true);
         
         setTimeout(() => {
             state.currentCardIndex++;
@@ -642,6 +683,7 @@ function verifyMatchAnswer(button, selectedChoice, correctCard) {
         }, 1200);
     } else {
         button.classList.add('wrong');
+        updateMastery(correctCard.id, false);
         setTimeout(() => {
             button.classList.remove('wrong');
             document.querySelectorAll('#match-options-container button').forEach(b => b.style.pointerEvents = 'auto');
@@ -710,14 +752,17 @@ function loadSpellingRound() {
         
         if (isCorrect) {
             document.querySelectorAll('.letter-slot').forEach(slot => slot.classList.add('filled', 'correct'));
-            state.gameScore += 15;
+            const xpGained = getXPReward(correctCard);
+            state.gameScore += xpGained;
             document.getElementById('game-score').textContent = state.gameScore;
+            updateMastery(correctCard.id, true);
             
             setTimeout(() => {
                 state.currentCardIndex++;
                 loadSpellingRound();
             }, 1200);
         } else {
+            updateMastery(correctCard.id, false);
             const slots = document.getElementById('spelling-slots');
             slots.style.animation = 'shake 0.4s ease';
             setTimeout(() => {
@@ -823,8 +868,11 @@ function checkMemoryMatch() {
             cardA.el.classList.add('matched');
             cardB.el.classList.add('matched');
             state.matchedMemoryPairs++;
-            state.gameScore += 20;
+            
+            const xpGained = getXPReward(cardA.data) + 5; // Extra bonus for matching memory pairs
+            state.gameScore += xpGained;
             document.getElementById('game-score').textContent = state.gameScore;
+            updateMastery(cardA.data.id, true);
             
             state.selectedMemoryCards = [];
             
@@ -957,9 +1005,8 @@ function exportVocabJSON() {
 // --- THEME MANAGEMENT ---
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    if (savedTheme === 'dark' || !savedTheme) {
         document.documentElement.classList.add('dark-mode');
         updateThemeButtons(true);
     } else {
@@ -988,5 +1035,357 @@ function updateThemeButtons(isDark) {
     }
     if (settingsThemeBtn) {
         settingsThemeBtn.textContent = text;
+    }
+}
+
+// --- MASTERY & ALGORITHM HELPERS ---
+function getXPReward(card) {
+    if (!state.mastery) state.mastery = {};
+    const mastery = state.mastery[card.id] || 0;
+    if (mastery <= 1) return 15; // New / Unfamiliar
+    if (mastery === 2) return 8;  // Familiar
+    return 3;                     // Mastered
+}
+
+function updateMastery(wordId, isCorrect) {
+    if (!state.mastery) state.mastery = {};
+    const current = state.mastery[wordId] || 0;
+    if (isCorrect) {
+        state.mastery[wordId] = Math.min(3, current + 1);
+    } else {
+        state.mastery[wordId] = Math.max(0, current - 1);
+    }
+    saveProgress();
+}
+
+function getWeightedRandomWords(words, count) {
+    if (!state.mastery) state.mastery = {};
+    
+    const weighted = words.map(word => {
+        const mastery = state.mastery[word.id] || 0;
+        let weight = 1.0;
+        if (mastery === 2) weight = 0.4;
+        else if (mastery >= 3) weight = 0.1;
+        return { word, weight };
+    });
+    
+    const selected = [];
+    const pool = [...weighted];
+    
+    while (selected.length < count && pool.length > 0) {
+        const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+        if (totalWeight <= 0) break;
+        
+        let random = Math.random() * totalWeight;
+        let foundIdx = -1;
+        
+        for (let i = 0; i < pool.length; i++) {
+            random -= pool[i].weight;
+            if (random <= 0) {
+                foundIdx = i;
+                break;
+            }
+        }
+        if (foundIdx === -1) foundIdx = pool.length - 1;
+        
+        selected.push(pool[foundIdx].word);
+        pool.splice(foundIdx, 1);
+    }
+    
+    // Fill remaining spots if needed
+    while (selected.length < count && words.length > 0) {
+        const missing = words.find(w => !selected.some(s => s.id === w.id));
+        if (!missing) break;
+        selected.push(missing);
+    }
+    
+    return selected;
+}
+
+// --- STICKER CONFIGURATION & SYSTEM ---
+const STICKERS_CONFIG = [
+    { level: 1, emoji: '🐱', name: { de: 'Katze', en: 'Cat', ar: 'قطة', uk: 'Кішка', tr: 'Kedi', ru: 'Кошка' } },
+    { level: 1, emoji: '🐶', name: { de: 'Hund', en: 'Dog', ar: 'كلب', uk: 'Собака', tr: 'Köpek', ru: 'Собака' } },
+    { level: 1, emoji: '⚽', name: { de: 'Ball', en: 'Ball', ar: 'كرة', uk: 'М\'яч', tr: 'Top', ru: 'Мяч' } },
+    { level: 2, emoji: '🦁', name: { de: 'Löwe', en: 'Lion', ar: 'أسد', uk: 'Лев', tr: 'Aslan', ru: 'Лев' } },
+    { level: 3, emoji: '🚀', name: { de: 'Rakete', en: 'Rocket', ar: 'صاروخ', uk: 'Ракета', tr: 'Roket', ru: 'Ракета' } },
+    { level: 4, emoji: '🦄', name: { de: 'Einhorn', en: 'Unicorn', ar: 'وحيد القرن', uk: 'Єдиноріг', tr: 'Tek boynuzlu at', ru: 'Единорог' } },
+    { level: 5, emoji: '🦖', name: { de: 'Dino', en: 'Dinosaur', ar: 'ديนาصور', uk: 'Динозавр', tr: 'Dinozor', ru: 'Динозавр' } },
+    { level: 6, emoji: '🐬', name: { de: 'Delfin', en: 'Dolphin', ar: 'دولفين', uk: 'Дельфін', tr: 'Yunus', ru: 'Дельфін' } },
+    { level: 7, emoji: '🧸', name: { de: 'Teddy', en: 'Teddy Bear', ar: 'دبدوب', uk: 'Ведмедик', tr: 'Oyuncak ayı', ru: 'Мишка' } },
+    { level: 8, emoji: '🦊', name: { de: 'Fuchs', en: 'Fox', ar: 'ثعلب', uk: 'Лис', tr: 'Tilki', ru: 'Лиса' } },
+    { level: 9, emoji: '🦉', name: { de: 'Eule', en: 'Owl', ar: 'بومة', uk: 'Сова', tr: 'Baykuş', ru: 'Сова' } },
+    { level: 10, emoji: '👑', name: { de: 'Krone', en: 'Crown', ar: 'تاج', uk: 'Корона', tr: 'Taç', ru: 'Корона' } }
+];
+
+function renderStickerAlbum() {
+    const container = document.getElementById('sticker-grid-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const lang = state.language || 'de';
+    
+    STICKERS_CONFIG.forEach(sticker => {
+        const isUnlocked = state.level >= sticker.level;
+        const card = document.createElement('div');
+        card.className = `sticker-item ${isUnlocked ? '' : 'locked'}`;
+        
+        const emojiEl = document.createElement('span');
+        emojiEl.className = 'sticker-emoji';
+        emojiEl.textContent = sticker.emoji;
+        card.appendChild(emojiEl);
+        
+        const labelEl = document.createElement('span');
+        labelEl.className = 'sticker-label';
+        
+        if (isUnlocked) {
+            labelEl.textContent = sticker.name[lang] || sticker.name['de'];
+        } else {
+            labelEl.textContent = `Lvl ${sticker.level}`;
+            
+            const lockEl = document.createElement('div');
+            lockEl.className = 'sticker-lock-badge';
+            lockEl.textContent = '🔒';
+            card.appendChild(lockEl);
+        }
+        
+        card.appendChild(labelEl);
+        
+        if (isUnlocked) {
+            card.addEventListener('click', () => {
+                if (card.classList.contains('clicked')) return;
+                card.classList.add('clicked');
+                setTimeout(() => card.classList.remove('clicked'), 600);
+            });
+        }
+        
+        container.appendChild(card);
+    });
+}
+
+// --- CONFETTI PARTICLE ENGINE ---
+let confettiActive = false;
+const confettiParticles = [];
+const confettiColors = ['#FF5B7F', '#5271FF', '#2EC4B6', '#FF9F1C', '#8338EC'];
+
+function startConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    confettiActive = true;
+    confettiParticles.length = 0;
+    
+    for (let i = 0; i < 150; i++) {
+        confettiParticles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height - 20,
+            size: Math.random() * 8 + 5,
+            color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+            speedY: Math.random() * 3 + 2,
+            speedX: Math.random() * 2 - 1,
+            rotation: Math.random() * 360,
+            rotationSpeed: Math.random() * 10 - 5
+        });
+    }
+    
+    function animate() {
+        if (!confettiActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let alive = false;
+        confettiParticles.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.rotation += p.rotationSpeed;
+            
+            if (p.y < canvas.height) {
+                alive = true;
+            }
+            
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation * Math.PI / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.restore();
+        });
+        
+        if (alive) {
+            requestAnimationFrame(animate);
+        } else {
+            confettiActive = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+    animate();
+}
+
+// --- MULTILINGUAL LOCALIZATION (TRANSLATIONS) ---
+const TRANSLATIONS = {
+    de: {
+        welcomeTitle: "Hallo! Was möchtest du heute lernen? 🌟",
+        welcomeSubtitle: "Wähle eine Kategorie und starte ein Spiel!",
+        chooseGame: "Wähle dein Lieblingsspiel:",
+        creatorTitle: "Eigene Karten ✍️",
+        creatorSubtitle: "Erstelle deine eigenen Vokabelkarten.",
+        settingsTitle: "Einstellungen & Info ⚙️",
+        settingsSubtitle: "Passe die App an und erfahre mehr über das Projekt.",
+        stickersTitle: "Mein Sticker-Album 📖",
+        stickersSubtitle: "Steige Level auf, um Sticker zu sammeln! Tippe sie an! ✨",
+        settingsLangTitle: "🌐 Sprache / Language",
+        settingsLangDesc: "Wähle die Sprache für Menüs und Anleitungen.",
+        resetProgressBtn: "🗑️ Fortschritt zurücksetzen",
+        themeToggleBtn: "🌓 Dark Mode umschalten",
+        checkUpdatesBtn: "🔍 Nach Updates suchen",
+        copyLogsBtn: "📋 Logs kopieren",
+        clearLogsBtn: "🧹 Logs löschen",
+        systemInfoTitle: "ℹ️ Systeminformationen"
+    },
+    en: {
+        welcomeTitle: "Hello! What do you want to learn today? 🌟",
+        welcomeSubtitle: "Choose a category and select a game!",
+        chooseGame: "Select your favorite game:",
+        creatorTitle: "Content Creator ✍️",
+        creatorSubtitle: "Create your own custom vocabulary cards.",
+        settingsTitle: "Settings & Info ⚙️",
+        settingsSubtitle: "Adjust your local settings and read details about the project.",
+        stickersTitle: "My Sticker Album 📖",
+        stickersSubtitle: "Level up to collect all stickers! Tap unlocked stickers for a surprise! ✨",
+        settingsLangTitle: "🌐 Language / Sprache",
+        settingsLangDesc: "Choose your preferred language for the buttons and instructions.",
+        resetProgressBtn: "🗑️ Reset Progress",
+        themeToggleBtn: "🌓 Toggle Dark Mode",
+        checkUpdatesBtn: "🔍 Check for Updates",
+        copyLogsBtn: "📋 Copy Logs",
+        clearLogsBtn: "🧹 Clear Logs",
+        systemInfoTitle: "ℹ️ System Information"
+    },
+    ar: {
+        welcomeTitle: "مرحباً! ماذا تريد أن تتعلم اليوم؟ 🌟",
+        welcomeSubtitle: "اختر فئة وابدأ اللعبة!",
+        chooseGame: "اختر لعبتك المفضلة:",
+        creatorTitle: "صانع المحتوى ✍️",
+        creatorSubtitle: "أنشئ بطاقات المفردات الخاصة بك.",
+        settingsTitle: "الإعدادات والمعلومات ⚙️",
+        settingsSubtitle: "اضبط إعداداتك المحلية واقرأ تفاصيل المشروع.",
+        stickersTitle: "ألبوم الملصقات الخاص بي 📖",
+        stickersSubtitle: "ارتفع في المستوى لجمع كل الملصقات! اضغط عليها لمفاجأة! ✨",
+        settingsLangTitle: "🌐 اللغة / Language",
+        settingsLangDesc: "اختر لغتك المفضلة للأزرار والتعليمات.",
+        resetProgressBtn: "🗑️ إعادة تعيين التقدم",
+        themeToggleBtn: "🌓 تبديل الوضع الداكن",
+        checkUpdatesBtn: "🔍 التحقق من التحديثات",
+        copyLogsBtn: "📋 نسخ السجلات",
+        clearLogsBtn: "🧹 مسح السجلات",
+        systemInfoTitle: "ℹ️ معلومات النظام"
+    },
+    uk: {
+        welcomeTitle: "Привіт! Що ти хочеш вивчити сьогодні? 🌟",
+        welcomeSubtitle: "Вибери категорію та вибери гру!",
+        chooseGame: "Вибери свою улюблену гру:",
+        creatorTitle: "Створення карток ✍️",
+        creatorSubtitle: "Створюйте власні картки зі словами.",
+        settingsTitle: "Налаштування та інформація ⚙️",
+        settingsSubtitle: "Налаштуйте локальні параметри та дізнайтеся більше про проект.",
+        stickersTitle: "Мій альбом наліпок 📖",
+        stickersSubtitle: "Підвищуй рівень, щоб збирати наліпки! Тисни на них! ✨",
+        settingsLangTitle: "🌐 Мова / Language",
+        settingsLangDesc: "Виберіть потрібну мову для кнопок та інструкцій.",
+        resetProgressBtn: "🗑️ Скинути прогрес",
+        themeToggleBtn: "🌓 Перемкнути темну тему",
+        checkUpdatesBtn: "🔍 Перевірити оновлення",
+        copyLogsBtn: "📋 Копіювати логи",
+        clearLogsBtn: "🧹 Очистити логи",
+        systemInfoTitle: "ℹ️ Системна інформація"
+    },
+    tr: {
+        welcomeTitle: "Merhaba! Bugün ne öğrenmek istersin? 🌟",
+        welcomeSubtitle: "Bir kategori seç ve oyuna başla!",
+        chooseGame: "En sevdiğin oyunu seç:",
+        creatorTitle: "Kart Oluşturucu ✍️",
+        creatorSubtitle: "Kendi özel kelime kartlarınızı oluşturun.",
+        settingsTitle: "Ayarlar ve Bilgi ⚙️",
+        settingsSubtitle: "Yerel ayarlarınızı düzenleyin ve proje ayrıntılarını okuyun.",
+        stickersTitle: "Sticker Albümüm 📖",
+        stickersSubtitle: "Tüm stickerları toplamak için seviye atla! Dokun onlara! ✨",
+        settingsLangTitle: "🌐 Dil / Language",
+        settingsLangDesc: "Düğmeler ve talimatlar için tercih ettiğiniz dili seçin.",
+        resetProgressBtn: "🗑️ İlerlemeyi Sıfırla",
+        themeToggleBtn: "🌓 Karanlık Modu Değiştir",
+        checkUpdatesBtn: "🔍 Güncellemeleri Denetle",
+        copyLogsBtn: "📋 Günlükleri Kopyala",
+        clearLogsBtn: "🧹 Günlükleri Temizle",
+        systemInfoTitle: "ℹ️ Sistem Bilgisi"
+    },
+    ru: {
+        welcomeTitle: "Привет! Что ты хочешь выучить сегодня? 🌟",
+        welcomeSubtitle: "Выбери категорию и начни игру!",
+        chooseGame: "Выбери свою любимую игру:",
+        creatorTitle: "Создатель карт ✍️",
+        creatorSubtitle: "Создавайте свои собственные карточки со словами.",
+        settingsTitle: "Настройки и информация ⚙️",
+        settingsSubtitle: "Настройте локальные параметры и узнайте подробности о проекте.",
+        stickersTitle: "Мой альбом наклеек 📖",
+        stickersSubtitle: "Повышай уровень, чтобы собирать наклейки! Нажми на них! ✨",
+        settingsLangTitle: "🌐 Язык / Language",
+        settingsLangDesc: "Выберите предпочитаемый язык для кнопок и инструкций.",
+        resetProgressBtn: "🗑️ Сбросить прогресс",
+        themeToggleBtn: "🌓 Переключить темную тему",
+        checkUpdatesBtn: "🔍 Проверить обновления",
+        copyLogsBtn: "📋 Копировать логи",
+        clearLogsBtn: "🧹 Очистить логи",
+        systemInfoTitle: "ℹ️ Системная информация"
+    }
+};
+
+function applyLanguage(lang) {
+    state.language = lang;
+    localStorage.setItem('user_language', lang);
+    
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    
+    const dashboardHeroTitle = document.querySelector('#screen-dashboard .hero-section h2');
+    if (dashboardHeroTitle) dashboardHeroTitle.textContent = t.welcomeTitle;
+    const dashboardHeroSubtitle = document.querySelector('#screen-dashboard .hero-section p');
+    if (dashboardHeroSubtitle) dashboardHeroSubtitle.textContent = t.welcomeSubtitle;
+    
+    const creatorHeroTitle = document.querySelector('#screen-creator .hero-section h2');
+    if (creatorHeroTitle) creatorHeroTitle.textContent = t.creatorTitle;
+    const creatorHeroSubtitle = document.querySelector('#screen-creator .hero-section p');
+    if (creatorHeroSubtitle) creatorHeroSubtitle.textContent = t.creatorSubtitle;
+    
+    const settingsHeroTitle = document.querySelector('#screen-settings .hero-section h2');
+    if (settingsHeroTitle) settingsHeroTitle.textContent = t.settingsTitle;
+    const settingsHeroSubtitle = document.querySelector('#screen-settings .hero-section p');
+    if (settingsHeroSubtitle) settingsHeroSubtitle.textContent = t.settingsSubtitle;
+    
+    const elMap = {
+        'modal-category-title': t.chooseGame,
+        'stickers-title': t.stickersTitle,
+        'stickers-subtitle': t.stickersSubtitle,
+        'settings-lang-title': t.settingsLangTitle,
+        'settings-lang-desc': t.settingsLangDesc,
+        'reset-progress-btn': t.resetProgressBtn,
+        'trigger-update-check-btn': t.checkUpdatesBtn,
+        'copy-debug-logs-btn': p => p ? p.textContent = t.copyLogsBtn : null,
+        'clear-debug-logs-btn': p => p ? p.textContent = t.clearLogsBtn : null
+    };
+    
+    Object.keys(elMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (typeof elMap[id] === 'function') {
+                elMap[id](el);
+            } else {
+                el.textContent = elMap[id];
+            }
+        }
+    });
+    
+    if (document.getElementById('screen-stickers').classList.contains('active')) {
+        renderStickerAlbum();
     }
 }
