@@ -227,9 +227,9 @@ export function loadMatchRound() {
     const catWords = state.vocabulary.filter(w => w.category === state.activeCategory);
     let wrongChoicesCandidates = catWords.filter(w => w.id !== card.id);
     
-    // Select 3 random choices (1 correct, 2 wrong)
+    // Select 4 random choices (1 correct, 3 wrong)
     const shuffledWrong = wrongChoicesCandidates.sort(() => 0.5 - Math.random());
-    const chosenWrong = shuffledWrong.slice(0, 2);
+    const chosenWrong = shuffledWrong.slice(0, 3);
     
     const choices = [card, ...chosenWrong];
     const shuffledChoicesIndices = shuffleIndicesWithWasm(choices.length);

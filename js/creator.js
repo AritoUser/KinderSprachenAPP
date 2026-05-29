@@ -66,6 +66,8 @@ export function renderCreatorTable() {
     const vocabCountEl = document.getElementById('vocab-count');
     if (vocabCountEl) vocabCountEl.textContent = state.vocabulary.length;
     
+    const t = TRANSLATIONS[state.language] || TRANSLATIONS['de'];
+    
     state.vocabulary.forEach((item) => {
         const tr = document.createElement('tr');
         
@@ -74,11 +76,13 @@ export function renderCreatorTable() {
             tr.style.backgroundColor = 'rgba(82, 113, 255, 0.04)';
         }
         
+        const transCat = (t.categories && t.categories[item.category]) ? t.categories[item.category] : item.category;
+        
         tr.innerHTML = `
             <td style="font-size: 1.5rem;">${item.emoji}</td>
             <td><strong>${item.word}</strong></td>
             <td style="color: var(--text-muted);">${getWordTranslation(item)}</td>
-            <td><span class="badge blue">${item.category}</span></td>
+            <td><span class="badge blue">${transCat}</span></td>
             <td>
                 ${isCustom ? `<button class="badge-delete-btn" onclick="deleteCustomVocab('${item.id}')" title="Delete">❌</button>` : `<span style="color: var(--text-muted); font-size: 0.8rem;">Default</span>`}
             </td>
