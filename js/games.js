@@ -218,7 +218,7 @@ export function loadMatchRound() {
     speakGerman(card.word);
     
     // Display card emoji
-    document.getElementById('match-card-emoji').textContent = card.emoji;
+    document.getElementById('match-question-emoji').textContent = card.emoji;
     
     // Load choices
     const container = document.getElementById('match-choices-container');
@@ -307,7 +307,7 @@ export function loadSpellingRound() {
     
     speakGerman(card.word);
     
-    document.getElementById('spelling-card-emoji').textContent = card.emoji;
+    document.getElementById('spelling-question-emoji').textContent = card.emoji;
     
     state.spellingTypedLetters = [];
     

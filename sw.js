@@ -1,7 +1,7 @@
 // sw.js
 // Service Worker for offline availability and update checking.
 
-const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.8';
+const CACHE_NAME = 'kinder-deutsch-lern-app-v1.0.9';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
@@ -17,10 +17,7 @@ const ASSETS_TO_CACHE = [
   'js/games.js',
   'content/vocabulary.json',
   'assets/wasm/core.wasm',
-  'manifest.json',
-  // Include Outfit Google Fonts locally if cached, or external CDN URLs
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap',
-  'https://fonts.gstatic.com/s/outfit/v11/QId1tHdjS0o1dr2dBbW4.woff2'
+  'manifest.json'
 ];
 
 // Install Service Worker and cache all vital assets
