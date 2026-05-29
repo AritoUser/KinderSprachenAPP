@@ -47,6 +47,7 @@
 
 /* Dark Mode Theme Variables */
 :root.dark-mode {
+    color-scheme: dark;
     --bg-app: #0F121D;
     --bg-card: rgba(25, 30, 48, 0.85);
     --bg-glass: rgba(18, 22, 36, 0.7);
@@ -882,6 +883,11 @@ button {
     transition: var(--transition-fast);
 }
 
+select option {
+    background-color: var(--bg-card);
+    color: var(--text-color);
+}
+
 .form-group input:focus, .form-group select:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(82, 113, 255, 0.15);
@@ -1364,6 +1370,10 @@ button {
 
 /* Responsive adjustments: Tablet and Desktop (Mobile First approach) */
 @media (min-width: 600px) {
+    .modal-content {
+        max-width: 680px;
+    }
+
     .app-header {
         flex-direction: row;
         justify-content: space-between;
